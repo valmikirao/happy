@@ -1,0 +1,273 @@
+import ReactDOM from 'react-dom';
+import React, { PropTypes } from 'react';
+import { createStore } from 'redux';
+import { connect, Provider }  from 'react-redux';
+
+class PAR extends React.Component {
+	render() {
+		return <div className="happy-par">PAR: {this.props.value} </div>;
+	}
+}
+
+class Score extends React.Component {
+	render() {
+		return <div className="happy-score" id="happy-score">
+			<div className="happy-score-label">Score:</div>
+			<div className="happy-score" id="happy-score-value">{this.props.value}</div>
+		</div>;
+	}
+}
+
+Score = connect(
+	(state) => ({
+		value : state.score
+	}),
+	() => ({}),
+)(Score);
+
+class TimerBar extends React.Component {
+	render() {
+		let intialWidth = 300;
+		let intialTime = 10;
+		let currentWidth = intialWidth * this.props.timeLeft / intialTime;
+		return <div className="happy-timer-bar" id="happy-timer-bar" style={{width: currentWidth + 'px'}}></div>;
+	}
+}
+
+class GameStatus extends React.Component {
+	render() {
+		return <div className="happy-header">
+			<PAR value="7500"/><Score/>
+			<TimerBar timeLeft={5.3}/>
+		</div>;
+	}
+}
+
+class Clause extends React.Component {
+	render() { 
+		return <div className="happy-blank">{this.props.text}</div>;
+	}
+}
+
+class Sentence extends React.Component {
+	render() {
+		let clauseComponents = this.props.clauses.map((clause, i) => {return <Clause text={clause} key={i}/>});
+		return <div className="happy-sentence">{clauseComponents}</div>;
+	}
+}
+
+const TRY_CLAUSE = 'TRY_CLAUSE';
+const tryClause = ({clauseI}) => ({
+	type : TRY_CLAUSE,
+	clauseI
+});
+
+const getSentences = () => {
+	let sentencesRaw = [
+		[['Haters gonna hate.', 'Why you so mean?', 'Fuck you!'], ['I understand meanness', 'I am enraged by meanness', 'I am intimidated by meanness'], ['is just insecurity.', 'needs revenge.', 'hurts my status.']],
+		[['We get it.', 'You\'re weird', 'I\'m weird.'], ['We both', 'Only you', 'Only I'], ['understand', 'are confused by', 'hate'], ['each other\'s', 'only your', 'only my'], ['experiences.', 'strangeness.']],
+		[['I got game.', 'I\'m so awkward.', 'I\'m so ashamed'], ['People are at ease with,', 'People are freaked out by,', 'People make fun of,'], ['my confident,', 'my pompous,', 'my asinine,'], ['calm,', 'nervous,', 'spastic,'], ['friendly manner.', 'standoffish manner.', 'belligerent manner.']],
+		[['Fun times.', 'This is serious!', 'Boring.'], ['I think of creative ways', 'I don\'t know what to do', 'I hate everyone'], ['to play,', 'to humiliate people,', 'to hurt someone,'], ['have fun,', 'work, work, work,', 'cry,'], ['and include everyone.', 'and exclude losers.', 'and leave in a huff.']],
+		[['How you do\'in?', 'Wanna fuck?', 'Hey bitch!'], ['I flirt', 'I offend', 'I run away'], ['in a friendly,', 'in a creepy,', 'in an awkward,'], ['appropriate ways.', 'obnoxious ways.', 'aggressive ways.']],
+		[['Friends everywhere!', 'Enemies everywhere!', 'Spies everywhere!'], ['I imagine everyone\'s', 'I know no one\'s'], ['my friend', 'my enemy', 'a serial killer'], ['and make conversation', 'and stare ahead', 'and fidget'], ['everywhere.', 'nowhere.']],
+		[['That\'s cool.', 'So annoying.', 'Fuck you!'], ['I understand annoy things', 'I hate annoying things', 'I\'m made apoplectic by annoying things'], ['are just my insecurities', 'are because others are stupid'], ['which I can overcome.', 'which don\'t exist.', 'which will sink me.']],
+		[['I am relaxed', 'I am nervous', 'I am agitated'], ['and confident', 'and self-conscious', 'and meek'], ['around people', 'when alone', 'around assholes'], ['including hot women.', 'including ugly women.']],
+		/* get people to open up */ [['I get people to open up', 'I get people to close off', 'I force people to conceal'], ['by sharing with them', 'by bragging to them', 'by yelling at them'], ['appropriately and', 'inappropriately and', 'improperly and'], ['listening to them.',  'ignoring them.', 'rejecting them.']],
+		[['I am charmed', 'I am annoyed', 'I hate'], ['by people\'s quirks.', 'by asshole\'s flaws.', 'by your stupidity.']],
+		[['You\'re special.', 'Who are you?', 'Go away.'], ['I give people my attention', 'I ignore people', 'I\'m too busy for people'], ['because they are important to me.', 'to manipulate them.', 'to get them off my back.']],
+	];
+
+	let sentencesProcessed = sentencesRaw.map((sentenceRaw) => {
+		let sentenceProcessed = sentenceRaw.map((clauseChoiceRaw) => {
+			let clauseChoiceProcessed = clauseChoiceRaw.map((clause, i) => {
+				let isCorrect = i === 0;
+
+				return {
+					text : clause,
+					isCorrect
+				}
+			});
+
+			return clauseChoiceProcessed;
+		});
+
+		return sentenceProcessed;
+	});
+
+	return sentencesProcessed;
+};
+
+let initialState = {
+	score : 0,
+	sentences : getSentences(),
+	currentSentenceMeta : {
+		i : 1,
+		currentClauseChoiceI : 0,
+		clausesChosen : [], // all blanks
+	}
+};
+
+
+const happyGameApp = (state = initialState, action) => {
+	switch (action.type) {
+		case TRY_CLAUSE :
+			let newScore = state.score;
+			let currentSentenceMeta = state.currentSentenceMeta;
+			let currentSentence = state.sentences[currentSentenceMeta.i];
+			let currentClauseChoice = currentSentence[currentSentenceMeta.currentClauseChoiceI];
+			let selectedClause = currentClauseChoice[action.clauseI];
+
+			let newCurrentSentenceMeta = {
+				...currentSentenceMeta,
+				clausesChosen : [...currentSentenceMeta.clausesChosen]
+			};
+
+			if(selectedClause.isCorrect) {
+				newScore += 10
+
+				let { currentClauseChoiceI } = currentSentenceMeta;
+
+				newCurrentSentenceMeta.clausesChosen[currentClauseChoiceI] = action.clauseI;
+				newCurrentSentenceMeta.currentClauseChoiceI++;
+			};
+
+			return {
+				...state,
+				score : newScore,
+				currentSentenceMeta : newCurrentSentenceMeta
+			};
+		default :
+			return state;
+	}
+}
+
+let store = createStore(happyGameApp);
+
+document.store = store;
+document.tryClause = tryClause;
+
+let ActiveClause = ({onClick, text, clauseI, key}) => <div className="happy-click-word" key={key} onClick={
+		() => onClick({clauseI})
+	}>{text}</div>;
+
+// ActiveClause.propTypes = {
+// 	clauseI : PropTypes.number.isRequired,
+// 	text : PropTypes.string.isRequired,
+// 	onClick : PropTypes.func
+// };
+
+ActiveClause = connect(
+	(state, ownProps) => ownProps,
+	(dispatch) => ({
+		onClick : ({clauseI}) => {
+			dispatch(tryClause({clauseI}))
+		}
+	})
+)(ActiveClause);
+
+class ActiveClauseChoice extends React.Component {
+	render() {
+		let clauses = this.props.clauses; 
+		return <div id="happy-current-word-group" className="happy-current-word-group"><div className="happy-word-group">
+			{ clauses.map((clause) => <ActiveClause key={clause.i} clauseI={clause.i} text={clause.text}/>) }
+		</div></div>
+	}
+}
+
+ActiveClauseChoice = connect(
+	(state) => {
+		let currentSentence = state.sentences[state.currentSentenceMeta.i];
+		let currentClauseChoice = currentSentence[state.currentSentenceMeta.currentClauseChoiceI];
+
+		let clauses = currentClauseChoice.map((stateClause, i) => ({
+			text : stateClause.text,
+			i
+		}));
+
+		return {clauses};
+	},
+	() => ({})
+)(ActiveClauseChoice);
+
+class PastSentences extends React.Component {
+	render() {
+		return <div id="happy-all-sentences" className="happy-all-sentences">
+			<Sentence clauses={['My insticts', 'guide me to', 'healthy', 'choices', '!']}/>
+		</div>;
+	}
+}
+
+class StartButton extends React.Component {
+	render() {
+		let display = this.props.started ? 'none' : 'inline';
+
+		return <div id="happy-start-button" className="happy-start-button" style={{display: display}}>Start!</div>;
+	}
+}
+
+
+let HappyCurrentSentence = ({displayClauses}) => <div id="happy-current-sentence">
+		<Sentence clauses={displayClauses}/>
+	</div>;
+
+HappyCurrentSentence = connect(
+	(state) => {
+		let currentSentence = state.sentences[state.currentSentenceMeta.i];
+		let clausesChosen = state.currentSentenceMeta.clausesChosen;
+
+		let displayClauses = currentSentence.map((clauseChoice, i) => {
+			let clauseI = clausesChosen[i];
+			if (clauseI !== undefined) {
+				return clauseChoice[clauseI].text;
+			}
+			else {
+				return '_____';
+			}
+		});
+
+		return {displayClauses};
+	},
+	() => ({})
+)(HappyCurrentSentence);
+
+class HappyGame extends React.Component {
+	render() {
+		return <div className="happy-main">
+			<GameStatus/>
+			<HappyCurrentSentence/>
+			<ActiveClauseChoice clauses={
+				[
+					{text : 'tired,', i : 0},
+					{text : 'energetic,', i : 1},
+					{text : 'slothful,', i : 2}
+				]
+			}/>
+			<PastSentences/>
+			<StartButton started={true}/>
+		</div>;
+	}
+}
+
+ReactDOM.render(
+	<Provider store={store}>
+		<HappyGame/>
+	</Provider>,
+	// <h1>Hello World</h1>,
+	document.getElementById('happy-main')
+);
+
+/*
+ GameField
+ 	PAR
+ 	Score
+ 	TimerBar
+ 	Sentence [ActiveSentence]
+ 	ActiveClause
+ 	PastSentences
+ 		Sentence [PastSentence]
+ 		
+*/
+
+
+
+    

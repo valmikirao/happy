@@ -1,0 +1,49 @@
+{
+  "name": "happy_react",
+  "version": "0.1.0",
+  "description": "The happiest game in the world!!!!",
+  "main": "happy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mongo": "perl -e 'system(@ARGV)' /c/'Program Files (x86)'/MongoDB/Server/3.2/bin/mongod --dbpath mongo-dir/ --port 27017 --storageEngine=mmapv1 --journal",
+    "express": "node express-server.js"
+  },
+  "keywords": [
+    "happy",
+    "psych",
+    "game"
+  ],
+  "author": "Valmiki Rao",
+  "license": "ISC",
+  "dependencies": {
+    "babel-preset-es2016": "^6.22.0",
+    "babel-preset-latest": "^6.22.0",
+    "babel-preset-react": "^6.23.0",
+    "babel-preset-stage-3": "^6.22.0",
+    "babelify": "^7.3.0",
+    "body-parser": "^1.17.1",
+    "clone": "^2.1.0",
+    "date-fns": "^1.28.3",
+    "es6-promise": "^4.1.0",
+    "express": "^4.15.2",
+    "express-basic-auth": "^1.0.2",
+    "isomorphic-fetch": "^2.2.1",
+    "jsonpointer": "^4.0.1",
+    "mongoose": "^4.9.5",
+    "promise": "^7.1.1",
+    "query-string": "^4.3.2",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
+    "react-redux": "^5.0.3",
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "browserify": "^14.1.0",
+    "chai": "^3.5.0",
+    "seed-random": "^2.2.0",
+    "tsify": "^3.0.1",
+    "typescript": "^2.2.1"
+  }
+}

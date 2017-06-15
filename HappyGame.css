@@ -1,0 +1,118 @@
+html {
+	font-size: 50px;
+}
+
+.happy-sentence {
+	margin: 10px;
+}
+
+.happy-main {
+	text-align: center;
+}
+
+.happy-blank {
+	display: inline;
+	background: lightblue;
+	width: 50px;
+	margin: 5px;
+}
+
+.happy-sentence.happy-current-sentence {
+	display: block;
+}
+
+.happy-sentence.happy-answered-sentence {
+	display: block;
+}
+
+.happy-click-word.happy-word-wrong {
+	color: red;
+}
+
+.happy-click-word.happy-word-correct {
+	color: #00cc00;
+}
+
+.happy-current-word-group {
+	display: table;
+	height: 5em;
+	text-align: center;
+	width : 100%;
+}
+
+.happy-current-word-group > div {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.happy-click-word {
+	cursor: pointer;
+	color: darkblue;
+	text-align: center;
+	display: block;
+}
+
+.happy-score {
+	display: inline;
+}
+
+.happy-par {
+	display: block;
+}
+
+.happy-score-label {
+	display: inline;
+}
+
+.happy-time-div {
+	display: none;
+	font-weight: bold;
+	padding: 5px 0px;
+	color: orange;
+}
+
+.happy-try-again {
+	display: block;
+	font-weight: normal;
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.happy-done {
+	color: orange;
+	display: block;
+}
+
+.happy-start-button {
+	font-weight: normal;
+	color: blue;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.happy-click-word-group {
+	font-weight: bold;
+	display: inline-block;
+}
+
+.happy-header {
+	text-align: left;
+}
+
+.happy-timer-bar {
+	height: 5px;
+	width: 300px;
+	background-color: darkred;
+	display: inline-block;
+}
+
+.happy-high-score-value {
+	margin: 0px 10px;
+	color: orange;
+}
+
+.happy-done-text {
+	font-weight: bold;
+	color: limegreen;
+}
