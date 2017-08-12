@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "allowJs": true,
+        "lib": [
+            "es2015",
+            "es2016",
+            "dom"
+        ],
+        "jsx": "react",
+        "module": "commonjs",
+        "sourceMap": true,
+        "target": "es5"
+    },
+    "include": [
+        "test-ts/**/*.ts",
+        "server-lib/**/*.ts",
+        "scripts/**/*.ts"
+    ],
+    "exclude": [
+    ]
+}

@@ -1,145 +1,116 @@
-'use strict';
-
-const Promise = require('promise');
-const clone = require('clone');
-const dateUtils = require('date-fns');
-const assert = require('assert');
-
-let mongoose = require('mongoose');
+"use strict";
+/// <reference path="types.d.ts"/>
+exports.__esModule = true;
+var Promise = require("promise");
+var dateUtils = require("date-fns");
+var assert = require("assert");
+var mongoose = require("mongoose");
 mongoose.Promise = Promise;
-
-const scoreHistorySchema = new mongoose.Schema({
-    gameConfigKey : {type : String, required : true},
-    score : {type : Number, required : true},
-    date : {type : Date, default : Date.now},
+var scoreHistorySchema = new mongoose.Schema({
+    gameConfigKey: { type: String, required: true },
+    score: { type: Number, required: true },
+    date: { type: Date, "default": Date.now }
 });
-
-const ScoreHistory = mongoose.model('scoreHistory', scoreHistorySchema);
-
-const init = function() {
-    mongoose.connect('mongodb://localhost:27017/db');
-    mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
-    mongoose.connection.once('open', function() {
-        console.log('Connected to MongoDB');
+var ScoreHistory = mongoose.model('scoreHistory', scoreHistorySchema);
+var init = function (_a) {
+    var _b = (_a === void 0 ? {} : _a).url, url = _b === void 0 ? 'mongodb://localhost:27017/db' : _b;
+    mongoose.connect(url, {
+        useMongoClient: true
     });
-}
-
-const recordScore = function(args)  {
-    console.log(args);
-    // {score, date = new Date()} = {}
-    const score = args.score;
-    const date = args.date;
-    const gameConfigKey = args.gameConfigKey;
-
-    assert(score !== void(0), 'score required');
-    assert(gameConfigKey, 'gameConfigKey required');
-
-    let scoreHistory = new ScoreHistory({score, date, gameConfigKey});
-    let promise = scoreHistory.save();
-    
+    mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
+    var returnPromise = new Promise(function (resolve, reject) {
+        mongoose.connection.once('open', function () {
+            console.log('Connected to MongoDB');
+            resolve(mongoose.connection);
+        });
+        mongoose.connection.on('error', reject);
+    });
+    return returnPromise;
+};
+exports.init = init;
+var recordScore = function (_a) {
+    var score = _a.score, _b = _a.date, date = _b === void 0 ? undefined : _b, gameConfigKey = _a.gameConfigKey;
+    var scoreHistory = new ScoreHistory({ score: score, date: date, gameConfigKey: gameConfigKey });
+    // types force us to be convoluted here,
+    // I have a feeling mong
+    var promise = scoreHistory.save();
+    // let promise  = new Promise<IScoreHistoryModel>((resolve) => {
+    //     scoreHistory.save(resolve)
+    // });
     return promise;
 };
-
-const getHighScore = function(args) {
-    const latestScore = args.latestScore;
-    const since = args.since;
-    const gameConfigKey = args.gameConfigKey;
-
-    assert(gameConfigKey, 'gameConfigKey required');
-
-    let query = {gameConfigKey};
-    if (typeof since !== 'undefined') {
-        query.date = { $gt : since };
+exports.recordScore = recordScore;
+var getHighScore = function (_a) {
+    var _b = _a.latestScore, latestScore = _b === void 0 ? null : _b, _c = _a.since, since = _c === void 0 ? null : _c, gameConfigKey = _a.gameConfigKey;
+    var query = { gameConfigKey: gameConfigKey };
+    if (since !== null) {
+        query.date = { $gt: since };
     }
-
-    const promise = ScoreHistory
+    var promise = ScoreHistory
         .findOne(query)
-        .sort({score : -1})
-        // .limit(1)
+        .sort({ score: -1 })
         .exec()
         .then(function (doc) {
-            let score = doc !== null ? doc.score : 0;
-            if (typeof latestScore !== 'undefined') {
-                score = latestScore > score ? latestScore : score;
-            }
-
-            return score;
-        });
-
+        var score = doc !== null ? doc.score : 0;
+        if (latestScore !== null) {
+            score = latestScore > score ? latestScore : score;
+        }
+        return score;
+    });
     return promise;
 };
-
-const getAllHighScores = function (args) {
-    const latestScore = args.latestScore;
-    const gameConfigKey = args.gameConfigKey;
-
+exports.getHighScore = getHighScore;
+var getAllHighScores = function (args) {
+    var latestScore = args.latestScore;
+    var gameConfigKey = args.gameConfigKey;
+    var _a = args.date, date = _a === void 0 ? new Date() : _a;
     assert(gameConfigKey, 'gameConfigKey is required');
-
-    const now = new Date();
-    let allTimePromise = getHighScore({
-        gameConfigKey,
-        latestScore,
+    var allTimePromise = getHighScore({
+        gameConfigKey: gameConfigKey,
+        latestScore: latestScore
     });
-
-    let dayPromise = getHighScore({
-        gameConfigKey,
-        latestScore,
-        since : dateUtils.startOfDay(now),
+    var dayPromise = getHighScore({
+        gameConfigKey: gameConfigKey,
+        latestScore: latestScore,
+        since: dateUtils.startOfDay(date)
     });
-
-    let weekPromise = getHighScore({
-        gameConfigKey,
-        latestScore,
-        since : dateUtils.startOfWeek(now),
+    var weekPromise = getHighScore({
+        gameConfigKey: gameConfigKey,
+        latestScore: latestScore,
+        since: dateUtils.startOfWeek(date)
     });
-
-    let monthPromise = getHighScore({
-        gameConfigKey,
-        latestScore,
-        since : dateUtils.startOfMonth(now),
+    var monthPromise = getHighScore({
+        gameConfigKey: gameConfigKey,
+        latestScore: latestScore,
+        since: dateUtils.startOfMonth(date)
     });
-
-    let yearPromise = getHighScore({
-        gameConfigKey,
-        latestScore,
-        since : dateUtils.startOfYear(now),
+    var yearPromise = getHighScore({
+        gameConfigKey: gameConfigKey,
+        latestScore: latestScore,
+        since: dateUtils.startOfYear(date)
     });
-    
-    let promises = [
+    var promises = [
         allTimePromise,
         dayPromise,
         weekPromise,
         monthPromise,
         yearPromise,
     ];
-
-    let allPromise = Promise
+    var allPromise = Promise
         .all(promises)
         .then(function (results) {
-            return {
-                allTimeHigh : results.shift(),
-                dayHigh : results.shift(),
-                weekHigh : results.shift(),
-                monthHigh : results.shift(),
-                yearHigh : results.shift(),
-            };
-        });
-
+        return {
+            allTimeHigh: results.shift(),
+            dayHigh: results.shift(),
+            weekHigh: results.shift(),
+            monthHigh: results.shift(),
+            yearHigh: results.shift()
+        };
+    });
     return allPromise;
-}
-
-const disconnect = function () {
-    return mongoose.disconnect();
-}
-
-const Persistence = module.exports = exports = {
-    recordScore,
-    getHighScore,
-    getAllHighScores,
-    init,
-    disconnect,
-    _test : {
-        mongoose,
-        ScoreHistory,
-    },
 };
+exports.getAllHighScores = getAllHighScores;
+var disconnect = function () {
+    return mongoose.disconnect();
+};
+exports.disconnect = disconnect;

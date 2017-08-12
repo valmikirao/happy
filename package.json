@@ -4,9 +4,14 @@
   "description": "The happiest game in the world!!!!",
   "main": "happy.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "mongo": "perl -e 'system(@ARGV)' /c/'Program Files (x86)'/MongoDB/Server/3.2/bin/mongod --dbpath mongo-dir/ --port 27017 --storageEngine=mmapv1 --journal",
-    "express": "node express-server.js"
+    "test": "mocha --timeout 10000 dist/test-ts/**/*.js",
+    "mongod": "mongod --dbpath mongo-dir/ --port 27017 --journal",
+    "start": "node dist/server-lib/bin/express-server.js",
+    "start-debug": "node --inspect=5858 dist/server-lib/bin/express-server.js",
+    "tsc": "tsc",
+    "webpack": "webpack",
+    "build": "tsc && webpack",
+    "dist": "cd .. && tar cvzf HappyTS.dist.tar.gz HappyTS/dist HappyTS/HappyGame.css HappyTS/happy.html HappyTS/happy.tsx HappyTS/lib HappyTS/package.json HappyTS/package-lock.json HappyTS/server-lib HappyTS/test-ts HappyTS/tsconfig.json HappyTS/webpack.config.js HappyTS/.vscode"
   },
   "keywords": [
     "happy",
@@ -16,6 +21,11 @@
   "author": "Valmiki Rao",
   "license": "ISC",
   "dependencies": {
+    "@types/express": "^4.0.36",
+    "@types/react-redux": "^4.4.46",
+    "@types/redux-thunk": "^2.1.0",
+    "@types/yargs": "^8.0.1",
+    "awesome-typescript-loader": "^3.2.1",
     "babel-preset-es2016": "^6.22.0",
     "babel-preset-latest": "^6.22.0",
     "babel-preset-react": "^6.23.0",
@@ -25,7 +35,7 @@
     "clone": "^2.1.0",
     "date-fns": "^1.28.3",
     "es6-promise": "^4.1.0",
-    "express": "^4.15.2",
+    "express": "^4.15.3",
     "express-basic-auth": "^1.0.2",
     "isomorphic-fetch": "^2.2.1",
     "jsonpointer": "^4.0.1",
@@ -36,12 +46,27 @@
     "react-dom": "^15.4.2",
     "react-redux": "^5.0.3",
     "redux": "^3.6.0",
-    "redux-thunk": "^2.2.0"
+    "redux-thunk": "^2.2.0",
+    "source-map-loader": "^0.2.1",
+    "tmp": "0.0.31",
+    "webpack": "^3.2.0",
+    "yargs": "^8.0.2"
   },
   "devDependencies": {
+    "@types/assert": "0.0.31",
+    "@types/chai": "^4.0.1",
+    "@types/clone": "^0.1.30",
+    "@types/date-fns": "^2.6.0",
+    "@types/isomorphic-fetch": "0.0.34",
+    "@types/mocha": "^2.2.41",
+    "@types/react": "^15.0.38",
+    "@types/react-dom": "^15.5.1",
+    "@types/tmp": "0.0.33",
     "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
     "browserify": "^14.1.0",
     "chai": "^3.5.0",
+    "mocha": "^3.4.2",
     "seed-random": "^2.2.0",
     "tsify": "^3.0.1",
     "typescript": "^2.2.1"

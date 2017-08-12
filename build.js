@@ -34,7 +34,8 @@ if (_inClientDir(fileIn)) {
         presets : [
             'react',
             'es2016',
-            'latest',
+            // 'latest',
+            'env',  
             'stage-3'
         ]
         // extensions : [

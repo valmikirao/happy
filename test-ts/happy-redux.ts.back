@@ -1,0 +1,198 @@
+import HappyRedux from '../lib/happy-redux';
+import {expect} from 'chai';
+import * as randomSeed from 'seed-random';
+import * as Promise from 'promise';
+
+import 'mocha';
+
+const {actions} = HappyRedux;
+
+type ItEquals = <T>(string, value : T, match : T) => void;
+const itEquals : ItEquals = (description, value, match) =>
+    it(`${description} === ${match}`, () => expect(value).to.deep.equal(match)) 
+
+const main = () => {
+    console.log('Begin testing ...');
+    randomSeed('Something totally random!!!', {global : true});
+
+    let store = HappyRedux.createHappyStore();
+    HappyRedux.init({
+        store,
+        initDataKey : 'TESTING',
+    });
+
+    let {sentenceData} = store.getState();
+
+    describe('init()', () => {
+        itEquals('# sentences right', sentenceData.availableSentences.length, 3);
+        itEquals('[0][0][0].isCorrect', sentenceData.availableSentences[0][0][0].isCorrect, true);
+        itEquals('[1][1][1].isCorrect', sentenceData.availableSentences[1][1][1].isCorrect, false);
+        itEquals('[1][1][1].text', sentenceData.availableSentences[1][1][1].text, 'B:B - Wrong');
+        itEquals('gameConfigKey', sentenceData.gameConfigKey, 'default-TESTING');
+    });
+
+    store.dispatch({
+        type : actions.START,
+        startTime : 1000,
+        intervalId : 22, // some random number
+    });
+
+    let state = store.getState();
+
+    describe('START', () => {
+        itEquals('barRemaining', state.timer.barRemaining, 1.0);
+        itEquals('startTime', state.timer.startTime, 1000);
+        itEquals('ticks', state.timer.ticks, 0);
+        itEquals('intervalId', state.timer.intervalId, 22);
+    });
+
+    store.dispatch({
+        type : actions.TICK,
+        currentTime : 1024,
+    });
+    state = store.getState();
+    
+    describe('TICK', () => {
+        itEquals('barRemaining', state.timer.barRemaining, 1.0);
+        itEquals('startTime', state.timer.startTime, 1000);
+        itEquals('ticks', state.timer.ticks, 0);
+    });
+
+    store.dispatch({
+        type : actions.TICK,
+        currentTime : 1026,
+    });
+    state = store.getState();
+
+    console.log('bar remaining !', state.timer);
+    describe('TICK 2', () => {
+        it('barRemaining <= 1.0', () => {expect(state.timer.barRemaining).to.be.lessThan(1.0)});
+        itEquals('ticks', state.timer.ticks, 1);
+    } );
+
+    
+    let previousBarRemaining = state.timer.barRemaining;
+    store.dispatch({
+        type : actions.TICK,
+        currentTime : 1076,
+    });
+    state = store.getState();
+
+    describe('TICK 3', () => {
+        it('barRemaining <= previous', () => expect(state.timer.barRemaining).to.be.lessThan(previousBarRemaining));
+        itEquals('ticks', state.timer.ticks, 3);
+        previousBarRemaining = state.timer.barRemaining;
+
+        itEquals('activeSentenceDisplay', state.activeSentenceDisplay, ['____', '____']);
+        itEquals('activeClauseChoice[0]', state.activeClauseChoice[0], {
+            isCorrect : false,
+            text : 'A:A - Wrong',
+        });
+    });
+    
+
+    describe('CORRECT_CHOICE', () => {
+        store.dispatch({
+            type : actions.CORRECT_CHOICE,
+            text : 'A:A - Right',
+        });
+
+        state = store.getState();
+
+        itEquals('activeSentenceDisplay', state.activeSentenceDisplay, ['A:A - Right', '____']);
+        itEquals('activeClauseChoice[0]', state.activeClauseChoice[0], {
+            isCorrect : false,
+            text : 'A:B - Wrong.2',
+        });
+        itEquals('activeClauseChoice[2]', state.activeClauseChoice[2], {
+            isCorrect: true,
+            text: 'A:B - Right',
+        });
+
+        it('barRemaining > previous', () => expect(state.timer.barRemaining).to.be.greaterThan(previousBarRemaining));
+    });
+
+    /*
+    store.dispatch({
+        type : actions.CORRECT_CHOICE,
+        text : 'A:B - Right',
+    });
+
+    state = store.getState();
+    
+    expect(state.pastSentences).to.deep.equal([['A:A - Right', 'A:B - Right']]);
+    expect(state.score).to.equal(11);
+    expect(state.activeSentenceDisplay).to.deep.equal([
+        '____',
+        '____',
+        '____',
+        '____',
+        '____', 
+        '____',
+        '____',
+        '____',
+    ]);
+    expect(state.activeClauseChoice).has.length(2);
+    // console.log(JSON.stringify(state.activeClauseChoice, null, "    "));
+
+    {
+        let {clickedWrong = false} = state.activeClauseChoice[0];
+        expect(clickedWrong).to.equal(false);
+    }
+
+    store.dispatch({
+        type : actions.WRONG_CHOICE,
+        activeClauseIndex : 0,
+    });
+
+    state = store.getState();
+    expect(state.score).to.equal(11);
+
+    {
+        let {clickedWrong = false} = state.activeClauseChoice[0];
+        expect(clickedWrong).to.equal(true);
+    }
+
+    store.dispatch({
+        type : actions.CORRECT_CHOICE,
+        text : 'C:A - Right',
+    });
+    expect(store.getState().score).to.equal(16);
+
+    expect(state.done).to.equal(false);
+    store.dispatch({type : actions.END});
+    state = store.getState();
+    expect(state.done).to.equal(true);
+
+    expect(state.highScores).to.deep.equal({loaded : false});
+    // make sure gameConfigKey is still legit
+    expect(state.sentenceData.gameConfigKey).to.equal('default-TESTING');
+
+    store.dispatch({
+        type : actions.SCORES_LOADED,
+        highScores : {
+            allTimeHigh : 1000,
+            yearHigh : 1000,
+            monthHigh : 1000,
+            weekHigh : 1000,
+            dayHigh : 1000,
+            currentScore : 1000,
+        },
+    });
+    state = store.getState();
+    expect(state.highScores).to.deep.equal({
+        loaded : true,
+        allTimeHigh : 1000,
+        yearHigh : 1000,
+        monthHigh : 1000,
+        weekHigh : 1000,
+        dayHigh : 1000,
+        currentScore : 1000,
+    });
+
+
+
+    console.log('Done!  I guess everything passed. :-P');
+*/};
+
+main();
