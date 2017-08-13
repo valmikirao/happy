@@ -91,6 +91,10 @@ const main = () => {
     let store = HappyRedux.createHappyStore();
     store.dispatch({
         type : actions.INIT,
+    });
+
+    store.dispatch({
+        type: actions.GAME_LOADED,
         initData : initDataTest(),
     });
 

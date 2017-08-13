@@ -168,6 +168,7 @@ namespace HappyRedux {
 		activeClauseChoice : TClauseChoice,
 		pastSentences : string[][],
 		started : boolean,
+		loaded : boolean,
 		done : boolean,
 		streak : number,
 		timer : {
@@ -179,18 +180,17 @@ namespace HappyRedux {
 		highScores : HighScoresT,
 	};
 
-	type GetInitialStateI = (string) => AppStateI;
-	const getInitialState : GetInitialStateI = (initData) => {
-		// not using initKey yet
-		let sentenceData = SentenceGenerator.initSentenceData(initData);
+	type GetInitialStateI = () => AppStateI;
+	const getInitialState : GetInitialStateI = () => {
 
 		return {
-			sentenceData,
+			sentenceData : null,
 			score : 0,
 			activeSentenceDisplay : null,
 			activeClauseChoice : null,
 			pastSentences : [],
 			started : false,
+			loaded : false,
 			done : false,
 			streak : 0,
 			timer : {
@@ -213,6 +213,7 @@ namespace HappyRedux {
 		TICK : 'action_TICK',
 		END : 'actions_END',
 		SCORES_LOADED : 'action_SCORES_LOADED',
+		GAME_LOADED : 'action_GAME_LOADED',
 	};
 
 	const happyGameApp = (state : AppStateI, action) : AppStateI => {
@@ -220,9 +221,18 @@ namespace HappyRedux {
 
 		switch (action.type) {
 			case actions.INIT : {
-				let {initData} = action;
+				return getInitialState();
+			}
+			case actions.GAME_LOADED : {
+				const {initData} = action;
 
-				return getInitialState(initData);
+				let sentenceData = SentenceGenerator.initSentenceData(initData);
+
+				return {
+					...state,
+					sentenceData,
+					loaded : true,
+				};
 			}
 			case actions.START : {
 				let {sentenceData} = state;
@@ -395,8 +405,18 @@ namespace HappyRedux {
 	)
 
 	export const connectHappyGame = (HappyGame) => connect(
-		({started, done} = {started : false, done : false}) => ({started, done}),
-		(dispatch) => ({}),
+		({started, done, loaded} = {started : false, loaded : false, done : false}) => ({started, loaded, done}),
+		(dispatch) => ({
+			loadSentenceSet : ({gameConfigKey}) => {
+				return getSentenceSet({gameConfigKey})
+					.then(sentenceSet => 
+						dispatch({
+							type : actions.GAME_LOADED,
+							initData : sentenceSet,
+						})
+					);
+			}
+		}),
 	)(HappyGame);
 
 	export interface OnClickCorrectI {
@@ -665,13 +685,9 @@ namespace HappyRedux {
 		// SentenceGenerator
 		// HappyRedux.SentenceGenerator = sentenceGenerator;
 
-		getSentenceSet({gameConfigKey})
-			.then(sentenceSet => 
-				store.dispatch({
-					type : actions.INIT,
-					initData : sentenceSet,
-				})
-			);
+		store.dispatch({
+			type : actions.INIT,
+		});
 	};
 }
 

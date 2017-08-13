@@ -85,6 +85,9 @@ var main = function () {
     var store = happy_redux_1.default.createHappyStore();
     store.dispatch({
         type: actions.INIT,
+    });
+    store.dispatch({
+        type: actions.GAME_LOADED,
         initData: initDataTest(),
     });
     {

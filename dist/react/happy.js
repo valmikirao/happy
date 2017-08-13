@@ -11687,16 +11687,23 @@ var _HighScores = (function (_super) {
 }(React.Component));
 ;
 var HighScores = happy_redux_1.default.connectHighScores(_HighScores);
+var gameConfigKey = queryString.parse(document.location.search).gameConfigKey;
 var _HappyGame = (function (_super) {
     __extends(_HappyGame, _super);
     function _HappyGame() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     _HappyGame.prototype.render = function () {
-        var _a = this.props, started = _a.started, done = _a.done;
+        var _a = this.props, started = _a.started, loaded = _a.loaded, done = _a.done;
+        var loadSentenceSet = this.props.loadSentenceSet;
         var innards;
         var key = 0;
-        if (!started) {
+        if (!loaded) {
+            innards = React.createElement("div", { className: 'happy-loading', key: key++ }, "Loading ...");
+            loadSentenceSet({ gameConfigKey: gameConfigKey })
+                .catch(function (err) { return alert(err); });
+        }
+        else if (!started) {
             innards = React.createElement(StartButton, { key: key++ });
         }
         else if (!done) {
@@ -11724,7 +11731,6 @@ ReactDOM.render(React.createElement(react_redux_1.Provider, { store: store },
     React.createElement(HappyGame, null)), 
 // <h1>Hello World</h1>,
 document.getElementById('happy-main'));
-var gameConfigKey = queryString.parse(document.location.search).gameConfigKey;
 happy_redux_1.default.init({
     store: store,
     gameConfigKey: gameConfigKey,
@@ -25314,16 +25320,15 @@ var HappyRedux;
     ;
     var SentenceGenerator = DefaultSentenceGenerator;
     ;
-    var getInitialState = function (initData) {
-        // not using initKey yet
-        var sentenceData = SentenceGenerator.initSentenceData(initData);
+    var getInitialState = function () {
         return {
-            sentenceData: sentenceData,
+            sentenceData: null,
             score: 0,
             activeSentenceDisplay: null,
             activeClauseChoice: null,
             pastSentences: [],
             started: false,
+            loaded: false,
             done: false,
             streak: 0,
             timer: {
@@ -25345,13 +25350,18 @@ var HappyRedux;
         TICK: 'action_TICK',
         END: 'actions_END',
         SCORES_LOADED: 'action_SCORES_LOADED',
+        GAME_LOADED: 'action_GAME_LOADED',
     };
     var happyGameApp = function (state, action) {
         // const {SentenceGenerator} = HappyRedux;
         switch (action.type) {
             case HappyRedux.actions.INIT: {
+                return getInitialState();
+            }
+            case HappyRedux.actions.GAME_LOADED: {
                 var initData = action.initData;
-                return getInitialState(initData);
+                var sentenceData = SentenceGenerator.initSentenceData(initData);
+                return __assign({}, state, { sentenceData: sentenceData, loaded: true });
             }
             case HappyRedux.actions.START: {
                 var sentenceData = state.sentenceData;
@@ -25455,9 +25465,20 @@ var HappyRedux;
     };
     HappyRedux.createHappyStore = function () { return redux_1.createStore(happyGameApp, redux_1.applyMiddleware(redux_thunk_1.default)); };
     HappyRedux.connectHappyGame = function (HappyGame) { return react_redux_1.connect(function (_a) {
-        var _b = _a === void 0 ? { started: false, done: false } : _a, started = _b.started, done = _b.done;
-        return ({ started: started, done: done });
-    }, function (dispatch) { return ({}); })(HappyGame); };
+        var _b = _a === void 0 ? { started: false, loaded: false, done: false } : _a, started = _b.started, done = _b.done, loaded = _b.loaded;
+        return ({ started: started, loaded: loaded, done: done });
+    }, function (dispatch) { return ({
+        loadSentenceSet: function (_a) {
+            var gameConfigKey = _a.gameConfigKey;
+            return HappyRedux.getSentenceSet({ gameConfigKey: gameConfigKey })
+                .then(function (sentenceSet) {
+                return dispatch({
+                    type: HappyRedux.actions.GAME_LOADED,
+                    initData: sentenceSet,
+                });
+            });
+        }
+    }); })(HappyGame); };
     var activeClauseActionConnect = function (dispatch) { return ({
         onClickCorrect: function (_a) {
             var text = _a.text;
@@ -25619,12 +25640,8 @@ var HappyRedux;
         // SentenceGenerator
         // HappyRedux.SentenceGenerator = sentenceGenerator;
         var store = _a.store, gameConfigKey = _a.gameConfigKey;
-        HappyRedux.getSentenceSet({ gameConfigKey: gameConfigKey })
-            .then(function (sentenceSet) {
-            return store.dispatch({
-                type: HappyRedux.actions.INIT,
-                initData: sentenceSet,
-            });
+        store.dispatch({
+            type: HappyRedux.actions.INIT,
         });
     };
 })(HappyRedux || (HappyRedux = {}));

@@ -229,15 +229,31 @@ class _HighScores extends React.Component<{
 
 const HighScores = HappyRedux.connectHighScores(_HighScores);
 
-class _HappyGame extends React.Component<{started : boolean, done : boolean}> {
+type THappyGameProps = {
+	started : boolean,
+	loaded : boolean,
+	done : boolean,
+	loadSentenceSet : (any) => Promise<any>, // action (Redux.Dispatch) => void, but don't want to load dispatch
+};
+
+const {gameConfigKey} = queryString.parse(document.location.search);
+
+class _HappyGame extends React.Component<THappyGameProps> {
 	render() {
-		const {started, done} = this.props;
+		const {started, loaded, done} = this.props;
+		const {loadSentenceSet} = this.props;
 
 		let innards;
 		
 		let key = 0;
 
-		if (! started) {
+		if (! loaded) {
+			innards = <div className='happy-loading' key={key++}>Loading ...</div>
+
+			loadSentenceSet({gameConfigKey})
+				.catch((err) => alert(err));
+		}
+		else if (! started) {
 			innards = <StartButton key={key++}/>;
 		}
 		else if (! done) {
@@ -271,8 +287,6 @@ ReactDOM.render(
 	// <h1>Hello World</h1>,
 	document.getElementById('happy-main'),
 );
-
-const {gameConfigKey} = queryString.parse(document.location.search);
 
 HappyRedux.init({
 	store,
