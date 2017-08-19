@@ -42,13 +42,16 @@ var HappyRedux;
                 gameConfigKey: sentenceSetData.gameConfigKey,
                 availableSentences: sentenceSetData.sentences,
                 activeSentence: null,
-                activeSentenceCorrect: [],
+                activeSentencesCorrect: [],
                 activeClauseChoice: null,
                 clauseChoiceCountInSentence: 0,
             };
         };
         return class_1;
     }());
+    function isClauseChoiceMulti(clauseChoice) {
+        return !(clauseChoice.length === 1 && clauseChoice[0].isCorrect);
+    }
     var DefaultSentenceGeneratorIntance = (function () {
         function DefaultSentenceGeneratorIntance(_a) {
             var sentenceData = _a.sentenceData;
@@ -62,21 +65,25 @@ var HappyRedux;
             var sentenceData = this.sentenceData;
             var availableSentences = sentenceData.availableSentences;
             var activeSentence = array_random_1.randomElement(availableSentences);
-            var activeClauseChoice = array_random_1.shuffle(activeSentence[0]);
-            var clauseChoiceCountInSentence = 0;
-            var activeSentenceCorrect = [];
+            var clauseChoiceCountInSentence = activeSentence.findIndex(function (clauseChoice) { return isClauseChoiceMulti(clauseChoice); });
+            var activeClauseChoice = array_random_1.shuffle(activeSentence[clauseChoiceCountInSentence]);
+            var activeSentencesCorrect = activeSentence.map(function (clauseChoice) {
+                return !isClauseChoiceMulti(clauseChoice) ?
+                    clauseChoice[0].text
+                    : null;
+            });
             return __assign({}, sentenceData, { availableSentences: availableSentences,
                 activeSentence: activeSentence,
                 activeClauseChoice: activeClauseChoice,
                 clauseChoiceCountInSentence: clauseChoiceCountInSentence,
-                activeSentenceCorrect: activeSentenceCorrect });
+                activeSentencesCorrect: activeSentencesCorrect });
         };
         DefaultSentenceGeneratorIntance.prototype.getActiveSentenceDisplay = function () {
             var sentenceData = this.sentenceData;
-            var activeSentence = sentenceData.activeSentence, activeSentenceCorrect = sentenceData.activeSentenceCorrect;
-            return activeSentence.map(function (_, i) {
-                return i < activeSentenceCorrect.length ?
-                    activeSentenceCorrect[i]
+            var activeSentence = sentenceData.activeSentence, activeSentencesCorrect = sentenceData.activeSentencesCorrect;
+            return activeSentencesCorrect.map(function (sentenceCorrect) {
+                return sentenceCorrect !== null ?
+                    sentenceCorrect
                     : '____';
             });
         };
@@ -86,18 +93,23 @@ var HappyRedux;
         DefaultSentenceGeneratorIntance.prototype.getSentenceDataCorrectChoice = function (args) {
             var text = args.text;
             var sentenceData = this.sentenceData;
-            var activeSentence = sentenceData.activeSentence, clauseChoiceCountInSentence = sentenceData.clauseChoiceCountInSentence, activeSentenceCorrect = sentenceData.activeSentenceCorrect;
-            clauseChoiceCountInSentence++;
-            activeSentenceCorrect = activeSentenceCorrect.concat([
-                text,
-            ]);
+            var activeSentence = sentenceData.activeSentence, clauseChoiceCountInSentence = sentenceData.clauseChoiceCountInSentence, activeSentencesCorrect = sentenceData.activeSentencesCorrect;
+            activeSentencesCorrect = clone(activeSentencesCorrect);
+            activeSentencesCorrect[clauseChoiceCountInSentence] = text;
             var activeClauseChoice = null;
-            if (clauseChoiceCountInSentence < activeSentence.length) {
-                activeClauseChoice = array_random_1.shuffle(activeSentence[clauseChoiceCountInSentence]);
+            while (true) {
+                clauseChoiceCountInSentence++;
+                if (clauseChoiceCountInSentence >= activeSentence.length)
+                    break;
+                var candidateClauseChoice = activeSentence[clauseChoiceCountInSentence];
+                if (isClauseChoiceMulti(candidateClauseChoice)) {
+                    activeClauseChoice = array_random_1.shuffle(candidateClauseChoice);
+                    break;
+                }
             }
             return __assign({}, sentenceData, { clauseChoiceCountInSentence: clauseChoiceCountInSentence,
                 activeClauseChoice: activeClauseChoice,
-                activeSentenceCorrect: activeSentenceCorrect });
+                activeSentencesCorrect: activeSentencesCorrect });
         };
         DefaultSentenceGeneratorIntance.prototype.isSentenceDone = function () {
             return this.sentenceData.activeClauseChoice === null;

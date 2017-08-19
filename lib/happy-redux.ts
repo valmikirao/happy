@@ -7,7 +7,6 @@ import * as clone from 'clone';
 import * as Promise from 'promise';
 
 import {shuffle, randomElement} from './array-random';
-// import rawSentences, {SentenceRawT} from './raw-sentences';
 import {IScoreHistory, TRecordScore, TGetAllHighScores, TAllHighScores} from '../server-lib/isomporphic-types';
 import {TSentence, TClauseChoice, TClause, ISentenceSetData} from '../server-lib/isomporphic-types';
 
@@ -27,7 +26,7 @@ namespace HappyRedux {
 		gameConfigKey : string, // used to store and look up high scores
 		availableSentences : TSentence[],
 		activeSentence : TSentence | null,
-		activeSentenceCorrect : string[],
+		activeSentencesCorrect : string[],
 		activeClauseChoice : TClauseChoice | null,
 		clauseChoiceCountInSentence : number,
 	}
@@ -64,14 +63,17 @@ namespace HappyRedux {
 				gameConfigKey : sentenceSetData.gameConfigKey, // used to store and look up high scores
 				availableSentences : sentenceSetData.sentences,
 				activeSentence : null,
-				activeSentenceCorrect : [],
+				activeSentencesCorrect : [],
 				activeClauseChoice : null,
 				clauseChoiceCountInSentence : 0,
 			}
 		}
 
 	}
-
+	
+	function isClauseChoiceMulti(clauseChoice : TClauseChoice) {
+		return ! (clauseChoice.length === 1 && clauseChoice[0].isCorrect);
+	}
 
 	class DefaultSentenceGeneratorIntance implements SentenceGeneratorInstanceI<IAllSentenceData> {
 
@@ -92,9 +94,13 @@ namespace HappyRedux {
 			let {sentenceData} = this;
 			let {availableSentences} = sentenceData;
 			let activeSentence = randomElement(availableSentences);
-			let activeClauseChoice = shuffle(activeSentence[0]);
-			let clauseChoiceCountInSentence = 0;
-			let activeSentenceCorrect = [];
+			let clauseChoiceCountInSentence = activeSentence.findIndex(clauseChoice => isClauseChoiceMulti(clauseChoice)) 
+			let activeClauseChoice = shuffle(activeSentence[clauseChoiceCountInSentence]);
+			let activeSentencesCorrect = activeSentence.map(clauseChoice =>
+				! isClauseChoiceMulti(clauseChoice) ? // if there is only one choice, just display the text
+					clauseChoice[0].text
+					: null
+			);
 			
 			return {
 				...sentenceData,
@@ -102,17 +108,17 @@ namespace HappyRedux {
 				activeSentence,
 				activeClauseChoice,
 				clauseChoiceCountInSentence,
-				activeSentenceCorrect
+				activeSentencesCorrect
 			};
 		}
 
 		getActiveSentenceDisplay() : string[] {
 			let {sentenceData} = this;
-			let {activeSentence, activeSentenceCorrect} = sentenceData;
+			let {activeSentence, activeSentencesCorrect} = sentenceData;
 
-			return activeSentence.map((_, i) => 
-				i < activeSentenceCorrect.length ?
-					activeSentenceCorrect[i]
+			return activeSentencesCorrect.map(sentenceCorrect => 
+				sentenceCorrect !== null ?
+					sentenceCorrect
 					: '____'
 			);
 		}
@@ -125,24 +131,28 @@ namespace HappyRedux {
 			let {text} = args;
 			let {sentenceData} = this;
 
-			let {activeSentence, clauseChoiceCountInSentence, activeSentenceCorrect} = sentenceData;
+			let {activeSentence, clauseChoiceCountInSentence, activeSentencesCorrect} = sentenceData;
 
-			clauseChoiceCountInSentence++;
-			activeSentenceCorrect = [
-				...activeSentenceCorrect,
-				text,
-			];
+			activeSentencesCorrect = clone(activeSentencesCorrect);
+			activeSentencesCorrect[clauseChoiceCountInSentence] = text;
 
 			let activeClauseChoice = null;
-			if (clauseChoiceCountInSentence < activeSentence.length) {
-				activeClauseChoice = shuffle(activeSentence[clauseChoiceCountInSentence]);
+			while(true) {
+				clauseChoiceCountInSentence++;
+				if (clauseChoiceCountInSentence >= activeSentence.length) break;
+
+				let candidateClauseChoice = activeSentence[clauseChoiceCountInSentence];
+				if (isClauseChoiceMulti(candidateClauseChoice)) {
+					activeClauseChoice = shuffle(candidateClauseChoice);
+					break;
+				}
 			}
 
 			return {
 				...sentenceData,
 				clauseChoiceCountInSentence,
 				activeClauseChoice,
-				activeSentenceCorrect,
+				activeSentencesCorrect,
 			};
 		}
 
