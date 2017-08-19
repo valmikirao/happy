@@ -17,24 +17,19 @@ var timeout = function (milliseconds) {
 var startTmpMongoDb = function () {
     var tmpDir = tmp.dirSync().name;
     var port = 27018;
-    var returnPromise = timeout(1000)
-        .then(function (_a) {
-        var tmpMongoDbProcess = child_process.spawn('mongod', [
-            '--dbpath', tmpDir,
-            '--port', "" + port,
-            '--journal',
-        ], { stdio: 'ignore' });
-        // {stdio : 'inherit'});
-        // there is probably a more complete way to make sure the server is ready,
-        // but waiting 1 second is good enough for now
-        return timeout(2000).then(function () {
-            return {
-                process: tmpMongoDbProcess,
-                url: 'mongodb://localhost:' + port + '/db',
-            };
-        });
+    var tmpMongoDbProcess = child_process.spawn('mongod', [
+        '--dbpath', tmpDir,
+        '--port', "" + port,
+        '--journal',
+    ], { stdio: 'ignore' });
+    // {stdio : 'inherit'});
+    // Wait at least 1 second before trying to connect
+    return timeout(1000).then(function () {
+        return {
+            process: tmpMongoDbProcess,
+            url: 'mongodb://localhost:' + port + '/db',
+        };
     });
-    return returnPromise;
 };
 var ItPromise = (function () {
     function ItPromise(promise) {
@@ -56,6 +51,22 @@ var ItPromise = (function () {
     };
     return ItPromise;
 }());
+var tryPersistInit = function (_a) {
+    var url = _a.url, triesRemaing = _a.triesRemaing;
+    return Persistence
+        .init({ url: url, silent: true }) // silent to avoid stack traces for each attempt
+        .catch(function (err) {
+        if (err.name = 'MongoError' && triesRemaing > 1) {
+            return timeout(500) // wait before trying again
+                .then(function () {
+                return tryPersistInit({ url: url, triesRemaing: triesRemaing - 1 });
+            });
+        }
+        else {
+            throw err;
+        }
+    });
+};
 var main = function () {
     var mongoProcess;
     var user = '_test_user_';
@@ -63,10 +74,10 @@ var main = function () {
         startTmpMongoDb()
             .then(function (mongoInfo) {
             mongoProcess = mongoInfo.process;
-            Persistence.init({ url: mongoInfo.url });
+            return tryPersistInit({ url: mongoInfo.url, triesRemaing: 10 });
         });
     });
-    describe('1 persistence.js', function () {
+    describe('persistence.js', function () {
         describe('#putSentenceSet -> #getSentenceSet', function () {
             var itPromise = new ItPromise(Persistence
                 .putSentenceSet({
@@ -119,6 +130,44 @@ var main = function () {
             itPromise.equals('allTimeHigh', 135, function (all) { return all.allTimeHigh; });
             itPromise.equals('weekHigh', 135, function (all) { return all.weekHigh; });
             itPromise.equals('dayHigh', 130, function (all) { return all.dayHigh; });
+        });
+        describe('#recordScore(2000, _new_test_user_) -> getAllHighScores(130, _test_user_)', function () {
+            var testDate = new Date('2017-07-19T11:45:50.241Z');
+            var yesterday = dateUtils.addDays(testDate, -1);
+            var user2 = '_new_test_user_';
+            var itPromise = new ItPromise(Persistence
+                .recordScore({
+                user: user2,
+                gameConfigKey: '_test_',
+                score: 2000,
+                date: yesterday,
+            })
+                .then(function () {
+                return Promise
+                    .all([
+                    Persistence
+                        .getAllHighScores({
+                        user: user,
+                        latestScore: 130,
+                        gameConfigKey: '_test_',
+                        date: testDate,
+                    }),
+                    Persistence
+                        .getAllHighScores({
+                        user: user2,
+                        latestScore: 130,
+                        gameConfigKey: '_test_',
+                        date: testDate,
+                    }),
+                ]);
+            }));
+            itPromise.succeeds();
+            itPromise.equals('allTimeHigh', 135, function (all) { return all[0].allTimeHigh; });
+            itPromise.equals('weekHigh', 135, function (all) { return all[0].weekHigh; });
+            itPromise.equals('dayHigh', 130, function (all) { return all[0].dayHigh; });
+            itPromise.equals('allTimeHigh[user2]', 2000, function (all) { return all[1].allTimeHigh; });
+            itPromise.equals('weekHigh[user2]', 2000, function (all) { return all[1].weekHigh; });
+            itPromise.equals('dayHigh[user2]', 130, function (all) { return all[1].dayHigh; });
         });
     });
     after(function () {

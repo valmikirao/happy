@@ -22,14 +22,17 @@ var sentenceSetSchema = new mongoose.Schema({
 });
 var SentenceSet = mongoose.model('sentenceSet', sentenceSetSchema);
 var init = function (_a) {
-    var _b = (_a === void 0 ? {} : _a).url, url = _b === void 0 ? 'mongodb://localhost:27017/db' : _b;
+    var _b = _a === void 0 ? {} : _a, _c = _b.url, url = _c === void 0 ? 'mongodb://localhost:27017/db' : _c, _d = _b.silent, silent = _d === void 0 ? false : _d;
     mongoose.connect(url, {
         useMongoClient: true,
     });
-    mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
+    if (!silent) {
+        mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
+    }
     var returnPromise = new Promise(function (resolve, reject) {
         mongoose.connection.once('open', function () {
-            console.log('Connected to MongoDB');
+            if (!silent)
+                console.log('Connected to MongoDB');
             resolve(mongoose.connection);
         });
         mongoose.connection.on('error', reject);
@@ -50,8 +53,8 @@ var recordScore = function (_a) {
 };
 exports.recordScore = recordScore;
 var getHighScore = function (_a) {
-    var _b = _a.latestScore, latestScore = _b === void 0 ? null : _b, _c = _a.since, since = _c === void 0 ? null : _c, gameConfigKey = _a.gameConfigKey;
-    var query = { gameConfigKey: gameConfigKey };
+    var _b = _a.latestScore, latestScore = _b === void 0 ? null : _b, _c = _a.since, since = _c === void 0 ? null : _c, gameConfigKey = _a.gameConfigKey, user = _a.user;
+    var query = { gameConfigKey: gameConfigKey, user: user };
     if (since !== null) {
         query.date = { $gt: since };
     }

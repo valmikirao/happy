@@ -39,18 +39,22 @@ const SentenceSet = mongoose.model<ISentenceSet>(
 
 type InitT = (args?: {
         url? : string,
+        silent? : boolean,
     })
     => Promise<mongoose.Connection>;
 
-const init : InitT = ({url = 'mongodb://localhost:27017/db'} = {}) => {
+const init : InitT = ({url = 'mongodb://localhost:27017/db', silent = false} = {}) => {
     mongoose.connect(url, {
         useMongoClient : true,
     });
-    mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
-    
+
+    if (!silent) {
+        mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
+    }
+
     let returnPromise = new Promise<mongoose.Connection>(function (resolve, reject) {
         mongoose.connection.once('open', () => {
-            console.log('Connected to MongoDB');
+            if (!silent) console.log('Connected to MongoDB');
             resolve(mongoose.connection);
         });
  
@@ -87,8 +91,9 @@ const getHighScore : TGetHighScore = ({
     latestScore = null,
     since = null,
     gameConfigKey,
+    user,
 }) => {
-    let query : any = {gameConfigKey};
+    let query : {user : string, gameConfigKey : string, date? : any} = {gameConfigKey, user};
     if (since !== null) {
         query.date = { $gt : since };
     }

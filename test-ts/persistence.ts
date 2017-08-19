@@ -30,26 +30,20 @@ const startTmpMongoDb : StartTmpMongoDbT = () => {
 
     const port = 27018;
 
-    let returnPromise = timeout(1000)
-        .then<StartTmpMongoInfoI>(({}) => {
-            let tmpMongoDbProcess = child_process.spawn('mongod', [
-                '--dbpath', tmpDir,
-                '--port', `${port}`,
-                '--journal',
-            ], {stdio : 'ignore'});
-            // {stdio : 'inherit'});
+    let tmpMongoDbProcess = child_process.spawn('mongod', [
+        '--dbpath', tmpDir,
+        '--port', `${port}`,
+        '--journal',
+    ], {stdio : 'ignore'});
+    // {stdio : 'inherit'});
 
-            // there is probably a more complete way to make sure the server is ready,
-            // but waiting 1 second is good enough for now
-            return timeout(2000).then<StartTmpMongoInfoI>(() => {
-                return {
-                    process : tmpMongoDbProcess,
-                    url : 'mongodb://localhost:' + port + '/db',
-                }
-            });
-        });
-    
-    return returnPromise;
+    // Wait at least 1 second before trying to connect
+    return timeout(1000).then<StartTmpMongoInfoI>(() => {
+        return {
+            process : tmpMongoDbProcess,
+            url : 'mongodb://localhost:' + port + '/db',
+        }
+    });
 };
 
 type ItTransform<T> = (T) => any;
@@ -82,6 +76,23 @@ class ItPromise<T> {
     }
 }
 
+type TTryPersistInit = (args : {url : string, triesRemaing : number}) => Promise<void>
+const tryPersistInit = ({url, triesRemaing}) => {
+    return Persistence
+        .init({url, silent : true}) // silent to avoid stack traces for each attempt
+        .catch(err => {
+            if (err.name = 'MongoError' && triesRemaing > 1) {
+                return timeout(500) // wait before trying again
+                    .then(() =>
+                        tryPersistInit({url, triesRemaing : triesRemaing - 1})
+                    );
+            }
+            else {
+                throw err;
+            }
+        })
+}
+
 const main = () => {
     let mongoProcess : child_process.ChildProcess;
 
@@ -92,11 +103,11 @@ const main = () => {
             .then(mongoInfo =>  {
                 mongoProcess = mongoInfo.process;
 
-                Persistence.init({url : mongoInfo.url});
+                return tryPersistInit({url : mongoInfo.url, triesRemaing : 10});
             })
     });
 
-    describe('1 persistence.js', () => {
+    describe('persistence.js', () => {
         describe('#putSentenceSet -> #getSentenceSet', () => {
             let itPromise = new ItPromise(
                 Persistence
@@ -161,6 +172,51 @@ const main = () => {
             itPromise.equals('allTimeHigh', 135, (all) => {return all.allTimeHigh});
             itPromise.equals('weekHigh', 135, (all) => {return all.weekHigh});
             itPromise.equals('dayHigh', 130, (all) => {return all.dayHigh});
+        });
+
+        describe('#recordScore(2000, _new_test_user_) -> getAllHighScores(130, _test_user_)', function () {
+            const testDate = new Date('2017-07-19T11:45:50.241Z');
+            const yesterday = dateUtils.addDays(testDate, -1);
+            const user2 = '_new_test_user_';
+
+            let itPromise = new ItPromise(
+                Persistence
+                    .recordScore({
+                        user : user2,
+                        gameConfigKey : '_test_',
+                        score: 2000,
+                        date : yesterday,
+                    })
+                    .then(() => {
+                        return Promise
+                            .all([
+                                Persistence
+                                    .getAllHighScores({
+                                        user,
+                                        latestScore : 130,
+                                        gameConfigKey : '_test_',
+                                        date : testDate,
+                                    }),
+                                Persistence
+                                    .getAllHighScores({
+                                        user : user2,
+                                        latestScore : 130,
+                                        gameConfigKey : '_test_',
+                                        date : testDate,
+                                    }),
+                            ]);
+                    })
+            );
+
+            itPromise.succeeds();
+
+            itPromise.equals('allTimeHigh', 135, (all) => {return all[0].allTimeHigh});
+            itPromise.equals('weekHigh', 135, (all) => {return all[0].weekHigh});
+            itPromise.equals('dayHigh', 130, (all) => {return all[0].dayHigh});
+
+            itPromise.equals('allTimeHigh[user2]', 2000, (all) => {return all[1].allTimeHigh});
+            itPromise.equals('weekHigh[user2]', 2000, (all) => {return all[1].weekHigh});
+            itPromise.equals('dayHigh[user2]', 130, (all) => {return all[1].dayHigh});
         });
     });
 
