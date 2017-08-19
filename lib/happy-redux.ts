@@ -7,7 +7,7 @@ import * as clone from 'clone';
 import * as Promise from 'promise';
 
 import {shuffle, randomElement} from './array-random';
-import {IScoreHistory, TRecordScore, TGetAllHighScores, TAllHighScores} from '../server-lib/isomporphic-types';
+import {IScoreHistory, IScoreHistoryData, TAllHighScores} from '../server-lib/isomporphic-types';
 import {TSentence, TClauseChoice, TClause, ISentenceSetData} from '../server-lib/isomporphic-types';
 
 require('isomorphic-fetch');
@@ -549,6 +549,8 @@ namespace HappyRedux {
 	// only way I can figure out how to get types working right with fetch
 	declare function fetch(input: string, init?: RequestInit): Promise<Response>;
 
+	export type TRecordScore = (args : IScoreHistoryData) => Promise<IScoreHistoryData>;
+
 	const recordScore : TRecordScore = ({score, date, gameConfigKey}) => {
 		let recordScorePromise =
 			fetch('/rest/recordScore', {
@@ -566,6 +568,12 @@ namespace HappyRedux {
 
 		return recordScorePromise;
 	};
+
+	export type TGetAllHighScores = (args: {
+        latestScore : number,
+        gameConfigKey : string,
+        date? : Date,
+    }) => Promise<TAllHighScores>;
 
 	const getAllHighScores : TGetAllHighScores = ({latestScore, gameConfigKey}) => {
 		const highScoreUrl = '/rest/getAllHighScores?'

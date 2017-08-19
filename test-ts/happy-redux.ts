@@ -148,7 +148,7 @@ const initDataTestYn : ISentenceSetData = {
 };
 
 const main = () => {
-    randomSeed('Something totally random!', {global : true});
+    randomSeed('Something totally random!!!', {global : true});
 
     describe('main test', () => {
         let store = HappyRedux.createHappyStore();
@@ -376,7 +376,8 @@ const main = () => {
         }
     });
 
-    describe.only('yn test', () => {
+    describe('yn test', () => {
+        
         let store = HappyRedux.createHappyStore();
         store.dispatch({
             type : actions.INIT,

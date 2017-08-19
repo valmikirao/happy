@@ -7,11 +7,20 @@ var assert = require("assert");
 var mongoose = require("mongoose");
 mongoose.Promise = Promise;
 var scoreHistorySchema = new mongoose.Schema({
+    user: { type: String, required: true },
     gameConfigKey: { type: String, required: true },
     score: { type: Number, required: true },
     date: { type: Date, "default": Date.now }
 });
 var ScoreHistory = mongoose.model('scoreHistory', scoreHistorySchema);
+var sentenceSetSchema = new mongoose.Schema({
+    gameConfigKey: { type: String, required: true, unique: true },
+    sentences: [[[{
+                    text: { type: String, required: true },
+                    isCorrect: { type: Boolean, required: true }
+                }]]]
+});
+var SentenceSet = mongoose.model('sentenceSet', sentenceSetSchema);
 var init = function (_a) {
     var _b = (_a === void 0 ? {} : _a).url, url = _b === void 0 ? 'mongodb://localhost:27017/db' : _b;
     mongoose.connect(url, {
@@ -29,8 +38,8 @@ var init = function (_a) {
 };
 exports.init = init;
 var recordScore = function (_a) {
-    var score = _a.score, _b = _a.date, date = _b === void 0 ? undefined : _b, gameConfigKey = _a.gameConfigKey;
-    var scoreHistory = new ScoreHistory({ score: score, date: date, gameConfigKey: gameConfigKey });
+    var score = _a.score, _b = _a.date, date = _b === void 0 ? undefined : _b, gameConfigKey = _a.gameConfigKey, user = _a.user;
+    var scoreHistory = new ScoreHistory({ score: score, date: date, gameConfigKey: gameConfigKey, user: user });
     // types force us to be convoluted here,
     // I have a feeling mong
     var promise = scoreHistory.save();
@@ -61,30 +70,34 @@ var getHighScore = function (_a) {
 };
 exports.getHighScore = getHighScore;
 var getAllHighScores = function (args) {
-    var latestScore = args.latestScore;
-    var gameConfigKey = args.gameConfigKey;
-    var _a = args.date, date = _a === void 0 ? new Date() : _a;
+    var latestScore = args.latestScore, gameConfigKey = args.gameConfigKey, user = args.user;
+    var _a = args.date, date = _a === void 0 ? new Date() : _a; // date defaults to now
     assert(gameConfigKey, 'gameConfigKey is required');
     var allTimePromise = getHighScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         latestScore: latestScore
     });
     var dayPromise = getHighScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         latestScore: latestScore,
         since: dateUtils.startOfDay(date)
     });
     var weekPromise = getHighScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         latestScore: latestScore,
         since: dateUtils.startOfWeek(date)
     });
     var monthPromise = getHighScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         latestScore: latestScore,
         since: dateUtils.startOfMonth(date)
     });
     var yearPromise = getHighScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         latestScore: latestScore,
         since: dateUtils.startOfYear(date)
@@ -110,6 +123,15 @@ var getAllHighScores = function (args) {
     return allPromise;
 };
 exports.getAllHighScores = getAllHighScores;
+var getSentenceSet = function (_a) {
+    var gameConfigKey = _a.gameConfigKey;
+    return SentenceSet
+        .findOne({ gameConfigKey: gameConfigKey })
+        .exec();
+};
+exports.getSentenceSet = getSentenceSet;
+var putSentenceSet = function (sentenceData) { return new SentenceSet(sentenceData).save(); };
+exports.putSentenceSet = putSentenceSet;
 var disconnect = function () {
     return mongoose.disconnect();
 };

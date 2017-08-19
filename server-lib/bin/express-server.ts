@@ -41,10 +41,11 @@ app.use(basicAuth({
 console.log(process.cwd());
 app.use('/static', express.static('.'));
 
-app.post('/rest/recordScore', (request, response, next) => {
+app.post('/rest/recordScore', (request : basicAuth.IBasicAuthedRequest, response, next) => {
     const score = parseInt(request.body.score);
     let date = request.body.date;
     const gameConfigKey = request.body.gameConfigKey;
+    const {user} = request.auth;
     
     if (date !== void(0)) {
         date = new Date(date);
@@ -52,6 +53,7 @@ app.post('/rest/recordScore', (request, response, next) => {
 
     Persistence
         .recordScore({
+            user,
             gameConfigKey,
             score,
             date,
@@ -63,12 +65,14 @@ app.post('/rest/recordScore', (request, response, next) => {
 });
 
 
-app.get('/rest/getAllHighScores', (request, response, next) => {
+app.get('/rest/getAllHighScores', (request : basicAuth.IBasicAuthedRequest, response, next) => {
     const latestScore = parseInt(request.query.latestScore);
     const gameConfigKey = request.query.gameConfigKey;
+    const user = request.auth.user;
 
     Persistence
         .getAllHighScores({
+            user,
             latestScore,
             gameConfigKey,
         })

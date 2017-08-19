@@ -18,13 +18,7 @@ export interface ISentenceSetData {
 
 export interface ISentenceSet extends mongoose.Document, ISentenceSetData {};
 
-
-export type TRecordScore = ({
-        score : number,
-        date : Date,
-        gameConfigKey : string,
-    })
-    => Promise<IScoreHistoryData>;
+export type TUserArg = {user : string};
 
 export interface TAllHighScores {
     allTimeHigh : number,
@@ -33,12 +27,6 @@ export interface TAllHighScores {
     monthHigh : number,
     yearHigh : number,
 }
-
-export type TGetAllHighScores = (args: {
-        latestScore : number,
-        gameConfigKey : string,
-        date? : Date,
-    }) => Promise<TAllHighScores>;
 
 export type TSentence = TClauseChoice[];
 export type TClauseChoice = TClause[];

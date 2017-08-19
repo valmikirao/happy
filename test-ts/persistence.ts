@@ -37,10 +37,11 @@ const startTmpMongoDb : StartTmpMongoDbT = () => {
                 '--port', `${port}`,
                 '--journal',
             ], {stdio : 'ignore'});
+            // {stdio : 'inherit'});
 
             // there is probably a more complete way to make sure the server is ready,
-            // but waiting 1 second is good enough
-            return timeout(1000).then<StartTmpMongoInfoI>(() => {
+            // but waiting 1 second is good enough for now
+            return timeout(2000).then<StartTmpMongoInfoI>(() => {
                 return {
                     process : tmpMongoDbProcess,
                     url : 'mongodb://localhost:' + port + '/db',
@@ -84,6 +85,8 @@ class ItPromise<T> {
 const main = () => {
     let mongoProcess : child_process.ChildProcess;
 
+    const user = '_test_user_';
+
     before(() => {
         startTmpMongoDb()
             .then(mongoInfo =>  {
@@ -93,7 +96,7 @@ const main = () => {
             })
     });
 
-    describe('persistence.js', () => {
+    describe('1 persistence.js', () => {
         describe('#putSentenceSet -> #getSentenceSet', () => {
             let itPromise = new ItPromise(
                 Persistence
@@ -119,6 +122,7 @@ const main = () => {
             let itPromise = new ItPromise(
                 Persistence
                     .getAllHighScores({
+                        user,
                         latestScore : 130,
                         gameConfigKey : '_test_',
                     })
@@ -137,6 +141,7 @@ const main = () => {
             let itPromise = new ItPromise(
                 Persistence
                     .recordScore({
+                        user,
                         gameConfigKey : '_test_',
                         score: 135,
                         date : yesterday,
@@ -144,6 +149,7 @@ const main = () => {
                     .then(() => {
                         return Persistence
                             .getAllHighScores({
+                                user,
                                 latestScore : 130,
                                 gameConfigKey : '_test_',
                                 date : testDate,

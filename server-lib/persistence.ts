@@ -4,12 +4,13 @@ import Promise = require('promise');
 import * as clone from 'clone';
 import * as dateUtils from 'date-fns';
 import * as assert from 'assert';
-import {IScoreHistory, TRecordScore, TGetAllHighScores, ISentenceSet, ISentenceSetData} from './isomporphic-types';
+import {IScoreHistory, IScoreHistoryData, TAllHighScores, ISentenceSet, ISentenceSetData} from './isomporphic-types';
 
 import mongoose = require('mongoose');
 mongoose.Promise = Promise;
 
 const scoreHistorySchema = new mongoose.Schema({
+    user : {type : String, required : true},
     gameConfigKey : {type : String, required : true},
     score : {type : Number, required : true},
     date : {type : Date, default : Date.now},
@@ -59,9 +60,10 @@ const init : InitT = ({url = 'mongodb://localhost:27017/db'} = {}) => {
     return returnPromise;
 }
 
+export type TRecordScore = (args : IScoreHistoryData & {user : string}) => Promise<IScoreHistoryData>;
 
-const recordScore : TRecordScore = ({score, date = undefined, gameConfigKey}) => {
-    let scoreHistory = new ScoreHistory({score, date, gameConfigKey});
+const recordScore : TRecordScore = ({score, date = undefined, gameConfigKey, user}) => {
+    let scoreHistory = new ScoreHistory({score, date, gameConfigKey, user});
 
     // types force us to be convoluted here,
     // I have a feeling mong
@@ -75,6 +77,7 @@ const recordScore : TRecordScore = ({score, date = undefined, gameConfigKey}) =>
 
 
 type TGetHighScore = (args : {
+    user : string,
     latestScore? : number,
     since? : Date,
     gameConfigKey : string,
@@ -107,37 +110,49 @@ const getHighScore : TGetHighScore = ({
     return promise;
 };
 
-const getAllHighScores : TGetAllHighScores = function (args) {
-    const latestScore = args.latestScore;
-    const gameConfigKey = args.gameConfigKey;
-    const {date = new Date()} = args;
+export type TGetAllHighScores = (args: {
+        user : string;
+        latestScore : number,
+        gameConfigKey : string,
+        date? : Date,
+    }) => Promise<TAllHighScores>;
+
+
+const getAllHighScores : TGetAllHighScores = (args) => {
+    const {latestScore, gameConfigKey, user} = args;
+    const {date = new Date()} = args; // date defaults to now
 
     assert(gameConfigKey, 'gameConfigKey is required');
 
     let allTimePromise = getHighScore({
+        user,
         gameConfigKey,
         latestScore,
     });
 
     let dayPromise = getHighScore({
+        user,
         gameConfigKey,
         latestScore,
         since : dateUtils.startOfDay(date),
     });
 
     let weekPromise = getHighScore({
+        user,
         gameConfigKey,
         latestScore,
         since : dateUtils.startOfWeek(date),
     });
 
     let monthPromise = getHighScore({
+        user,
         gameConfigKey,
         latestScore,
         since : dateUtils.startOfMonth(date),
     });
 
     let yearPromise = getHighScore({
+        user,
         gameConfigKey,
         latestScore,
         since : dateUtils.startOfYear(date),

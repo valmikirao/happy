@@ -142,7 +142,7 @@ var initDataTestYn = {
     ],
 };
 var main = function () {
-    randomSeed('Something totally random!', { global: true });
+    randomSeed('Something totally random!!!', { global: true });
     describe('main test', function () {
         var store = happy_redux_1.default.createHappyStore();
         store.dispatch({
@@ -326,7 +326,7 @@ var main = function () {
             });
         }
     });
-    describe.only('yn test', function () {
+    describe('yn test', function () {
         var store = happy_redux_1.default.createHappyStore();
         store.dispatch({
             type: actions.INIT,

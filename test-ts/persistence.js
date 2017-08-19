@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var chai_1 = require("chai");
 require("mocha");
 var dateUtils = require("date-fns");
@@ -23,14 +23,13 @@ var startTmpMongoDb = function () {
             '--dbpath', tmpDir,
             '--port', "" + port,
             '--journal',
-        ], { stdio: 'ignore' });
-        // {stdio : 'inherit'});
+        ], { stdio: 'ignore' }); //{stdio : 'inherit'});
         // there is probably a more complete way to make sure the server is ready,
         // but waiting 1 second is good enough for now
-        return timeout(2000).then(function () {
+        return timeout(1000).then(function () {
             return {
                 process: tmpMongoDbProcess,
-                url: 'mongodb://localhost:' + port + '/db',
+                url: 'mongodb://localhost:' + port + '/db'
             };
         });
     });
@@ -73,8 +72,8 @@ var main = function () {
                 gameConfigKey: '__test__',
                 sentences: [[[{
                                 text: 'text',
-                                isCorrect: true,
-                            }]]],
+                                isCorrect: true
+                            }]]]
             })
                 .then(function () {
                 return Persistence
@@ -89,7 +88,7 @@ var main = function () {
                 .getAllHighScores({
                 user: user,
                 latestScore: 130,
-                gameConfigKey: '_test_',
+                gameConfigKey: '_test_'
             }));
             itPromise.succeeds();
             itPromise.equals('allTimeHigh', 130, function (all) { return all.allTimeHigh; });
@@ -104,7 +103,7 @@ var main = function () {
                 user: user,
                 gameConfigKey: '_test_',
                 score: 135,
-                date: yesterday,
+                date: yesterday
             })
                 .then(function () {
                 return Persistence
@@ -112,7 +111,7 @@ var main = function () {
                     user: user,
                     latestScore: 130,
                     gameConfigKey: '_test_',
-                    date: testDate,
+                    date: testDate
                 });
             }));
             itPromise.succeeds();
@@ -127,4 +126,3 @@ var main = function () {
     });
 };
 main();
-//# sourceMappingURL=persistence.js.map

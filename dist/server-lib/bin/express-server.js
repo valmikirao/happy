@@ -29,11 +29,13 @@ app.post('/rest/recordScore', function (request, response, next) {
     var score = parseInt(request.body.score);
     var date = request.body.date;
     var gameConfigKey = request.body.gameConfigKey;
+    var user = request.auth.user;
     if (date !== void (0)) {
         date = new Date(date);
     }
     Persistence
         .recordScore({
+        user: user,
         gameConfigKey: gameConfigKey,
         score: score,
         date: date,
@@ -46,8 +48,10 @@ app.post('/rest/recordScore', function (request, response, next) {
 app.get('/rest/getAllHighScores', function (request, response, next) {
     var latestScore = parseInt(request.query.latestScore);
     var gameConfigKey = request.query.gameConfigKey;
+    var user = request.auth.user;
     Persistence
         .getAllHighScores({
+        user: user,
         latestScore: latestScore,
         gameConfigKey: gameConfigKey,
     })
