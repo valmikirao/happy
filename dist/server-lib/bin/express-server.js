@@ -66,9 +66,9 @@ var respondWithSentenceSet = function (response) { return function (sentenceSet)
 }); }; };
 app.put('/rest/sentenceSet/:gameConfigKey', function (request, response, next) {
     var gameConfigKey = request.params.gameConfigKey;
-    var sentences = request.body.sentences;
+    var _a = request.body, sentences = _a.sentences, name = _a.name;
     Persistence
-        .putSentenceSet({ gameConfigKey: gameConfigKey, sentences: sentences })
+        .putSentenceSet({ gameConfigKey: gameConfigKey, sentences: sentences, name: name })
         .then(respondWithSentenceSet(response))
         .catch(next);
 });
@@ -78,6 +78,12 @@ app.get('/rest/sentenceSet/:gameConfigKey', function (request, response, next) {
         .getSentenceSet({ gameConfigKey: gameConfigKey })
         .then(respondWithSentenceSet(response))
         .catch(next);
+});
+app.get('/rest/sentenceSetList', function (request, response, next) {
+    var user = request.body.user;
+    Persistence
+        .getSentenceSetList()
+        .then(function (list) { return response.json(list); });
 });
 app.use(function (error, request, response, next) {
     console.error(error.stack);

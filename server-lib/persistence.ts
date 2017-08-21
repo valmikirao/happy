@@ -5,6 +5,7 @@ import * as clone from 'clone';
 import * as dateUtils from 'date-fns';
 import * as assert from 'assert';
 import {IScoreHistory, IScoreHistoryData, TAllHighScores, ISentenceSet, ISentenceSetData} from './isomporphic-types';
+import {TSentenceSetList, TSentenceSetListItem} from './isomporphic-types';
 
 import mongoose = require('mongoose');
 mongoose.Promise = Promise;
@@ -26,6 +27,7 @@ const ScoreHistory = mongoose.model<IScoreHistory>(
 
 const sentenceSetSchema = new mongoose.Schema({
     gameConfigKey : {type : String, required : true, unique : true},
+    name : {type : String, required : true},
     sentences : [[[{
         text : {type : String, required : true},
         isCorrect : {type : Boolean, required : true},
@@ -102,7 +104,7 @@ const getHighScore : TGetHighScore = ({
         .findOne(query)
         .sort({score : -1})
         // .limit(1)
-        .exec()
+        .exec<IScoreHistoryData>()
         .then(function (doc) {
             let score = doc !== null ? doc.score : 0;
             if (latestScore !== null) {
@@ -191,7 +193,25 @@ type TGetSentenceSet = ({gameConfigKey : string}) => Promise<ISentenceSetData>;
 const getSentenceSet : TGetSentenceSet = ({gameConfigKey}) => {
     return SentenceSet
         .findOne({gameConfigKey})
-        .exec()
+        .exec<ISentenceSetData>()
+}
+
+type TListSentenceSets = () => Promise<TSentenceSetList>;
+
+const getSentenceSetList = () => {
+    return SentenceSet
+        .find({})
+        .limit(100) // this shouldn't be an issue for a while, but for now keep it from getting crazy
+        .select({name : 1, gameConfigKey : 1})
+        .sort({name : 1, gameConfigKey : 1})
+        .exec<mongoose.TFoundDoc<TSentenceSetListItem>[]>()
+        .then(found =>
+            found.map(({_doc}) => {
+                const {name, gameConfigKey} = _doc;
+
+                return {name, gameConfigKey};
+            })
+        );
 }
 
 type TPutSentenceSet = (sentenceData : ISentenceSetData) => Promise<ISentenceSet>
@@ -209,4 +229,5 @@ export {
     disconnect,
     putSentenceSet,
     getSentenceSet,
+    getSentenceSetList,
 };

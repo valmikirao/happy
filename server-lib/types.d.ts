@@ -80,10 +80,22 @@ declare module 'mongoose' {
         save() : PromiseM<T>
     }
 
+    export type TFoundDoc<T> = {
+        _doc : T
+    }
+
     interface DocumentQuery<T> {
         sort(any) : DocumentQuery<T>,
-        findOne(any) : DocumentQuery<T>
-        exec() : PromiseM<T>
+        findOne(any) : DocumentQuery<T>,
+        exec<U>() : PromiseM<U>,
+        aggregate() : IAggregate<T>,
+        find(any) : DocumentQuery<T>,
+        limit(number) : DocumentQuery<T>,
+        select(string) : DocumentQuery<T>, 
+    }
+
+    interface IAggregate<T> extends DocumentQuery<T> {
+        group(any) : IAggregate<T>,
     }
 
     interface TypeOfModel<T> extends DocumentQuery<T> {

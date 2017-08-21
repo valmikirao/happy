@@ -15,6 +15,7 @@ var scoreHistorySchema = new mongoose.Schema({
 var ScoreHistory = mongoose.model('scoreHistory', scoreHistorySchema);
 var sentenceSetSchema = new mongoose.Schema({
     gameConfigKey: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     sentences: [[[{
                     text: { type: String, required: true },
                     isCorrect: { type: Boolean, required: true },
@@ -133,6 +134,22 @@ var getSentenceSet = function (_a) {
         .exec();
 };
 exports.getSentenceSet = getSentenceSet;
+var getSentenceSetList = function () {
+    return SentenceSet
+        .find({})
+        .limit(100) // this shouldn't be an issue for a while, but for now keep it from getting crazy
+        .select({ name: 1, gameConfigKey: 1 })
+        .sort({ name: 1, gameConfigKey: 1 })
+        .exec()
+        .then(function (found) {
+        return found.map(function (_a) {
+            var _doc = _a._doc;
+            var name = _doc.name, gameConfigKey = _doc.gameConfigKey;
+            return { name: name, gameConfigKey: gameConfigKey };
+        });
+    });
+};
+exports.getSentenceSetList = getSentenceSetList;
 var putSentenceSet = function (sentenceData) { return new SentenceSet(sentenceData).save(); };
 exports.putSentenceSet = putSentenceSet;
 var disconnect = function () {

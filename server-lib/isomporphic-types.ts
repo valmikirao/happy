@@ -13,6 +13,7 @@ export interface IScoreHistory extends mongoose.Document, IScoreHistoryData {};
 
 export interface ISentenceSetData {
     gameConfigKey : string,
+    name : string,
     sentences : TSentence[],
 };
 
@@ -35,3 +36,9 @@ export type TClause = {
     text : string,
     clickedWrong? : boolean,
 };
+
+export type TSentenceSetListItem = {
+    name : string,
+    gameConfigKey : string,
+};
+export type TSentenceSetList = TSentenceSetListItem[];

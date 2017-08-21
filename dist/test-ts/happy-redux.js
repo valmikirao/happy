@@ -10,6 +10,7 @@ var itEquals = function (description, value, match) {
 };
 var initDataTest = {
     gameConfigKey: '_testing_',
+    name: 'Testing',
     sentences: [
         [
             [
@@ -81,8 +82,9 @@ var initDataTest = {
     ]
 };
 var initDataTestYn = {
-    "gameConfigKey": "_yn_test_",
-    "sentences": [
+    gameConfigKey: "_yn_test_",
+    name: "Testing YN",
+    sentences: [
         [
             [
                 {

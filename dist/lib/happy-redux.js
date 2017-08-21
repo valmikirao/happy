@@ -431,6 +431,7 @@ var HappyRedux;
             .then(function (result) { return ({
             gameConfigKey: result.gameConfigKey,
             sentences: result.sentences,
+            name: result.name,
         }); });
         return sentenceSetPromise;
     };

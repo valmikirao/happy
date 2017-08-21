@@ -89,13 +89,13 @@ const respondWithSentenceSet = (response) => (sentenceSet) => response.json({
 
 app.put('/rest/sentenceSet/:gameConfigKey', (request, response, next) => {
     const {gameConfigKey} = request.params;
-    const {sentences} = request.body;
+    const {sentences, name} = request.body;
 
     Persistence
-        .putSentenceSet({gameConfigKey, sentences})
+        .putSentenceSet({gameConfigKey, sentences, name})
         .then(respondWithSentenceSet(response))
         .catch(next);
-})
+});
 
 app.get('/rest/sentenceSet/:gameConfigKey', (request, response, next) => {
     const {gameConfigKey} = request.params;
@@ -104,6 +104,14 @@ app.get('/rest/sentenceSet/:gameConfigKey', (request, response, next) => {
         .getSentenceSet({gameConfigKey})
         .then(respondWithSentenceSet(response))
         .catch(next);
+});
+
+app.get('/rest/sentenceSetList', (request, response, next) => {
+    const {user} = request.body;
+
+    Persistence
+        .getSentenceSetList()
+        .then(list => response.json(list))
 })
 
 app.use((error, request, response, next) => {

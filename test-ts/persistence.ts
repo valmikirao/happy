@@ -48,15 +48,10 @@ const startTmpMongoDb : StartTmpMongoDbT = () => {
 
 type ItTransform<T> = (T) => any;
 
-class ItPromise<T> {
-    private promise : Promise<T>;
-
-    constructor(promise : Promise<T>) {
-        this.promise = promise;
-    }
+class ItPromise<T> extends Promise<T> {
 
     succeeds() {
-        it('succeeds', () => this.promise);
+        it('succeeds', () => this);
     }
 
     // private identityTransform(value : T) : T {return value}
@@ -67,13 +62,14 @@ class ItPromise<T> {
         transform : (T) => U,
     ) {
         it(name + ' === ' + match, () => {
-            return this.promise.then(rawValue => {
+            return this.then(rawValue => {
                 let value = transform(rawValue);
 
                 expect(value).to.equal(match);
             });
         });
     }
+
 }
 
 type TTryPersistInit = (args : {url : string, triesRemaing : number}) => Promise<void>
@@ -93,6 +89,10 @@ const tryPersistInit = ({url, triesRemaing}) => {
         })
 }
 
+function itAsync<T>(description :string, promise : Promise<T>) : void {
+    it(description, () => promise);
+}
+
 const main = () => {
     let mongoProcess : child_process.ChildProcess;
 
@@ -108,124 +108,150 @@ const main = () => {
     });
 
     describe('persistence.js', () => {
-        describe('#putSentenceSet -> #getSentenceSet', () => {
-            let itPromise = new ItPromise(
+        const gameConfigKey = '__test__';
+        const gameConfigKey2 = '__test_2__'
+
+        const getSetAsync = Persistence
+            .putSentenceSet({
+                gameConfigKey : gameConfigKey,
+                name : 'Test',
+                sentences : [[[{
+                            text : 'text',
+                            isCorrect : true,
+                }]]],
+            })
+            .then(() => Persistence
+                .putSentenceSet({
+                    gameConfigKey : gameConfigKey2,
+                    name : 'Test 2',
+                    sentences : [[[{
+                                text : 'text 2',
+                                isCorrect : true,
+                    }]]],
+                })
+            )
+            .then(() =>
                 Persistence
-                    .putSentenceSet({
-                        gameConfigKey : '__test__',
-                        sentences : [[[{
-                                    text : 'text',
-                                    isCorrect : true,
-                        }]]],
-                    })
-                    .then(() =>
-                        Persistence
-                            .getSentenceSet({gameConfigKey : '__test__'})
-                    )
+                    .getSentenceSet({gameConfigKey : gameConfigKey})
             );
 
-            itPromise.equals<string>('sentences[0][0][0].text', 'text', (sentenceSet : ISentenceSetData) => {
-                return sentenceSet.sentences[0][0][0].text
-            });
+        describe('#putSentenceSet -> #getSentenceSet', () => {
+            itAsync('name', getSetAsync.then(({name}) => expect(name).to.equal('Test')));
+            itAsync('sentences[0][0][0].text', getSetAsync.then(({sentences}) => expect(sentences[0][0][0].text).to.equal('text')));
         });
+
+        const getOtherSetAsync = getSetAsync
+            .then(() => Persistence
+                .getSentenceSet({gameConfigKey : gameConfigKey2})
+            );
+
+        describe('#putSentenceSet -> #getSentenceSet 2', () => {
+            itAsync('name', getOtherSetAsync.then(({name}) => expect(name).to.equal('Test 2')));
+            itAsync('sentences[0][0][0].text', getOtherSetAsync.then(({sentences}) => expect(sentences[0][0][0].text).to.equal('text 2')));
+        });
+
+        const getListAsync = getOtherSetAsync
+            .then(() => Persistence
+                .getSentenceSetList()
+            )
+        
+        describe('#getSentenceSetList', () => {
+            itAsync('list is right', getListAsync.then(list => expect(list).to.deep.equal([
+                {name : 'Test', gameConfigKey : gameConfigKey},
+                {name : 'Test 2', gameConfigKey : gameConfigKey2},
+            ])))
+        })
+
+
+        const getAllSameAsync = getListAsync.then(() =>
+            Persistence
+                .getAllHighScores({
+                    user,
+                    latestScore : 130,
+                    gameConfigKey : gameConfigKey,
+                })
+        );
 
         describe('#getAllHighScores(130)', () => {
-            let itPromise = new ItPromise(
-                Persistence
-                    .getAllHighScores({
-                        user,
-                        latestScore : 130,
-                        gameConfigKey : '_test_',
-                    })
-            );
-
-            itPromise.succeeds();
-            itPromise.equals('allTimeHigh', 130, (all) => {return all.allTimeHigh});
-            itPromise.equals('weekHigh', 130, (all) => {return all.weekHigh});
-            itPromise.equals('dayHigh', 130, (all) => {return all.dayHigh});
+            itAsync('allTimeHigh', getAllSameAsync.then(({allTimeHigh}) => expect(allTimeHigh).to.equal(130)));
+            itAsync('weekHigh', getAllSameAsync.then(({weekHigh}) => expect(weekHigh).to.equal(130)));
+            itAsync('dayHigh', getAllSameAsync.then(({dayHigh}) => expect(dayHigh).to.equal(130)));
         });
+
+        const testDate = new Date('2017-07-19T11:45:50.241Z');
+        const yesterday = dateUtils.addDays(testDate, -1);
+
+        
+        const getAllDifferentAsync = getAllSameAsync
+            .then(() => Persistence
+                .recordScore({
+                    user,
+                    gameConfigKey : gameConfigKey,
+                    score: 135,
+                    date : yesterday,
+                })
+            )
+            .then(() => Persistence
+                .getAllHighScores({
+                    user,
+                    latestScore : 130,
+                    gameConfigKey : gameConfigKey,
+                    date : testDate,
+                })
+            )
 
         describe('#recordScore(135) -> getAllHighScores(130)', function () {
-            const testDate = new Date('2017-07-19T11:45:50.241Z');
-            const yesterday = dateUtils.addDays(testDate, -1);
-
-            let itPromise = new ItPromise(
-                Persistence
-                    .recordScore({
-                        user,
-                        gameConfigKey : '_test_',
-                        score: 135,
-                        date : yesterday,
-                    })
-                    .then(() => {
-                        return Persistence
-                            .getAllHighScores({
-                                user,
-                                latestScore : 130,
-                                gameConfigKey : '_test_',
-                                date : testDate,
-                            })
-                    })
-            );
-
-            itPromise.succeeds();
-            itPromise.equals('allTimeHigh', 135, (all) => {return all.allTimeHigh});
-            itPromise.equals('weekHigh', 135, (all) => {return all.weekHigh});
-            itPromise.equals('dayHigh', 130, (all) => {return all.dayHigh});
+            itAsync('allTimeHigh', getAllDifferentAsync.then(({allTimeHigh}) => expect(allTimeHigh).to.equal(135)));
+            itAsync('weekHigh', getAllDifferentAsync.then(({weekHigh}) => expect(weekHigh).to.equal(135)));
+            itAsync('dayHigh', getAllDifferentAsync.then(({dayHigh}) => expect(dayHigh).to.equal(130)));
         });
 
-        describe('#recordScore(2000, _new_test_user_) -> getAllHighScores(130, _test_user_)', function () {
-            const testDate = new Date('2017-07-19T11:45:50.241Z');
-            const yesterday = dateUtils.addDays(testDate, -1);
-            const user2 = '_new_test_user_';
+        const user2 = '_test_user_2_';
+        
+        const getAllMultiUser = getAllDifferentAsync
+            .then(() => Persistence
+                .recordScore({
+                    user : user2,
+                    gameConfigKey : gameConfigKey,
+                    score: 2000,
+                    date : yesterday,
+                })
+            )
+            .then(() => Persistence
+                .getAllHighScores({
+                    user,
+                    latestScore : 130,
+                    gameConfigKey : gameConfigKey,
+                    date : testDate,
+                })
+            );
 
-            let itPromise = new ItPromise(
-                Persistence
-                    .recordScore({
+        describe('#recordScore(2000, _new_test_user_) -> getAllHighScores(130, _test_user_)', () => {
+            itAsync('allTimeHigh', getAllMultiUser.then(({allTimeHigh}) => expect(allTimeHigh).to.equal(135)));
+            itAsync('weekHigh', getAllMultiUser.then(({weekHigh}) => expect(weekHigh).to.equal(135)));
+            itAsync('dayHigh', getAllMultiUser.then(({dayHigh}) => expect(dayHigh).to.equal(130)));
+
+            const getAllMultiUser2 = getAllMultiUser
+                .then(() => Persistence
+                    .getAllHighScores({
                         user : user2,
-                        gameConfigKey : '_test_',
-                        score: 2000,
-                        date : yesterday,
+                        latestScore : 130,
+                        gameConfigKey : gameConfigKey,
+                        date : testDate,
                     })
-                    .then(() => {
-                        return Promise
-                            .all([
-                                Persistence
-                                    .getAllHighScores({
-                                        user,
-                                        latestScore : 130,
-                                        gameConfigKey : '_test_',
-                                        date : testDate,
-                                    }),
-                                Persistence
-                                    .getAllHighScores({
-                                        user : user2,
-                                        latestScore : 130,
-                                        gameConfigKey : '_test_',
-                                        date : testDate,
-                                    }),
-                            ]);
-                    })
-            );
+                )
 
-            itPromise.succeeds();
-
-            itPromise.equals('allTimeHigh', 135, (all) => {return all[0].allTimeHigh});
-            itPromise.equals('weekHigh', 135, (all) => {return all[0].weekHigh});
-            itPromise.equals('dayHigh', 130, (all) => {return all[0].dayHigh});
-
-            itPromise.equals('allTimeHigh[user2]', 2000, (all) => {return all[1].allTimeHigh});
-            itPromise.equals('weekHigh[user2]', 2000, (all) => {return all[1].weekHigh});
-            itPromise.equals('dayHigh[user2]', 130, (all) => {return all[1].dayHigh});
+            itAsync('allTimeHigh[user2]', getAllMultiUser2.then(({allTimeHigh}) => expect(allTimeHigh).to.equal(2000)));
+            itAsync('weekHigh[user2]', getAllMultiUser2.then(({weekHigh}) => expect(weekHigh).to.equal(2000)));
+            itAsync('dayHigh[user2]', getAllMultiUser2.then(({dayHigh}) => expect(dayHigh).to.equal(130)));
         });
+
     });
 
     after(function () {
         Persistence.disconnect();
         mongoProcess.kill();
     });
-
-    
 };
 
 main();

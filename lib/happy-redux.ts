@@ -689,6 +689,7 @@ namespace HappyRedux {
 			.then(result => ({
 				gameConfigKey : <string>result.gameConfigKey,
 				sentences : <TSentence[]>result.sentences,
+				name : <string>result.name,
 			}));
 
 		return sentenceSetPromise;

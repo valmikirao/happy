@@ -14,6 +14,7 @@ const itEquals : ItEquals = (description, value, match) =>
 
 const initDataTest : ISentenceSetData = {
     gameConfigKey : '_testing_',
+    name : 'Testing',
     sentences : [
         [
             [
@@ -86,8 +87,9 @@ const initDataTest : ISentenceSetData = {
 };
 
 const initDataTestYn : ISentenceSetData = {
-    "gameConfigKey" : "_yn_test_",
-    "sentences" : [
+    gameConfigKey : "_yn_test_",
+    name : "Testing YN",
+    sentences : [
         [
             [
                 {
