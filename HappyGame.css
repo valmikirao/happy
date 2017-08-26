@@ -10,10 +10,14 @@ html {
 	text-align: center;
 }
 
+.happy-list {
+	text-align: center;
+}
+
 .happy-blank {
 	display: inline;
 	background: lightblue;
-	width: 50px;
+	/* width: 50px; // apparently ignored with 'inline' */
 	margin: 5px;
 }
 
