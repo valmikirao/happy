@@ -390,13 +390,30 @@ const main = () => {
             initData : initDataTestYn,
         });
 
+        describe('GAME_LOADED', () => {
+            const state = store.getState();
+
+            itEquals('sentencePreviews', state.sentencePreviews, [
+                [
+                    {type : 'FIXED', text : 'Is this true?'},
+                    {type : 'CHOSEN', text : 'Yes'},
+                    {type : 'CHOSEN', text : '!'},
+                ],
+                [
+                    {text : "RIGHT", type : "CHOSEN"},
+                    {text : "NO CHOICE", type : "FIXED"},
+                    {text : "RIGHT", type : "CHOSEN"},
+                ],
+            ]);
+        })
+
         store.dispatch({
             type : actions.START,
             startTime : 1000,
             intervalId : 22, // some random number
         });
 
-        describe('GAME_LOADED', () => {
+        describe('START', () => {
             const state = store.getState();
 
             itEquals('activeSentenceDisplay', state.activeSentenceDisplay, ['Is this true?', '____', '____']);

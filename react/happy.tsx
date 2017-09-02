@@ -238,12 +238,32 @@ type THappyGameProps = {
 
 const {gameConfigKey} = queryString.parse(document.location.search);
 
+class _PreviewSentences extends React.Component<{sentencePreviews : HappyRedux.TSentencePreview[]}> {
+	render() {
+		const {sentencePreviews} = this.props;
+		
+		const innards = sentencePreviews.map(sentence => {
+			const sentenceInnards = sentence.map(({type, text}) => {
+				const clauseClass = type === 'FIXED' ? 'happy-preview-clause-fixed' : 'happy-preview-clause-chosen';
+
+				return <div className={clauseClass}> { text } </div>;
+			});
+
+			return <div className='happy-preview-sentence'>{ sentenceInnards }</div>;
+		});
+
+		return <div className="happy-preview-sentences">{ innards }</div>;
+	}
+}
+
+const PreviewSentences = HappyRedux.connectPreviewSentences(_PreviewSentences);
+
 class _HappyGame extends React.Component<THappyGameProps> {
 	render() {
 		const {started, loaded, done} = this.props;
-		const {loadSentenceSet} = this.props;
+		const {loadSentenceSet} = this.props; 
 
-		let innards;
+		let innards : JSX.Element | JSX.Element[] = [];
 		
 		let key = 0;
 
@@ -254,7 +274,10 @@ class _HappyGame extends React.Component<THappyGameProps> {
 				.catch((err) => alert(err));
 		}
 		else if (! started) {
-			innards = <StartButton key={key++}/>;
+			innards = [
+				<StartButton key={key++}/>,
+				<PreviewSentences/>,
+			];
 		}
 		else if (! done) {
 			innards = [

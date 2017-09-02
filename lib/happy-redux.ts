@@ -31,22 +31,30 @@ namespace HappyRedux {
 		clauseChoiceCountInSentence : number,
 	}
 
-	interface SentenceGeneratorInstanceI<T> {
+	export type TSentencePreviewClause = {
+		type : 'FIXED' | 'CHOSEN',
+		text : string,
+	};
+
+	export type TSentencePreview = TSentencePreviewClause[];
+
+	interface ISentenceGeneratorInstance<T> {
 		getGameConfigKey() : string;
 		getNextSentenceData() : T;
 		getActiveSentenceDisplay() : string[];
 		getActiveClauseChoice() : TClause[];
 		getSentenceDataCorrectChoice(args : {text: string}) : T;
 		isSentenceDone() : boolean;
+		getSentencePreviews() : TSentencePreview[];
 	}
 
-	interface SentenceGeneratorI<T> {
+	interface ISentenceGenerator<T> {
 		initSentenceData(sentenceData : any) : IAllSentenceData;
-		getInstance(args : {sentenceData}) : SentenceGeneratorInstanceI<T>;
+		getInstance(args : {sentenceData}) : ISentenceGeneratorInstance<T>;
 	}
 
 
-	const DefaultSentenceGenerator : SentenceGeneratorI<IAllSentenceData> = class {
+	const DefaultSentenceGenerator : ISentenceGenerator<IAllSentenceData> = class {
 		/*
 			I would prefer not to have different instance and static classes,
 			but typescript is weird about static methods for interfaces.  There is
@@ -75,7 +83,7 @@ namespace HappyRedux {
 		return ! (clauseChoice.length === 1 && clauseChoice[0].isCorrect);
 	}
 
-	class DefaultSentenceGeneratorIntance implements SentenceGeneratorInstanceI<IAllSentenceData> {
+	class DefaultSentenceGeneratorIntance implements ISentenceGeneratorInstance<IAllSentenceData> {
 
 		private sentenceData: IAllSentenceData;
 		
@@ -156,6 +164,25 @@ namespace HappyRedux {
 			};
 		}
 
+		getSentencePreviews() : TSentencePreview[] {
+			// return [{type : 'FIXED', text : 'A'}]
+			return this.sentenceData.availableSentences.map(sentence => {
+				const previewSentence : TSentencePreview = sentence.map(clauseChoice => {
+					const previewClause : TSentencePreviewClause =
+						clauseChoice.length === 1 ?
+							{type : 'FIXED', text : clauseChoice[0].text}
+							: {
+								type : 'CHOSEN',
+								text : clauseChoice.find(clause => clause.isCorrect).text,
+							};
+					
+					return previewClause;
+				});
+
+				return previewSentence;
+			});
+		}
+
 		isSentenceDone() {
 			return this.sentenceData.activeClauseChoice === null;
 		}
@@ -188,8 +215,10 @@ namespace HappyRedux {
 			intervalId : number,
 		},
 		highScores : HighScoresT,
+		sentencePreviews : TSentencePreview[],
 	};
 
+	
 	type GetInitialStateI = () => AppStateI;
 	const getInitialState : GetInitialStateI = () => {
 
@@ -212,6 +241,7 @@ namespace HappyRedux {
 			highScores : {
 				loaded : false,
 			},
+			sentencePreviews : [],
 		};
 	};
 
@@ -236,11 +266,13 @@ namespace HappyRedux {
 			case actions.GAME_LOADED : {
 				const {initData} = action;
 
-				let sentenceData = SentenceGenerator.initSentenceData(initData);
+				const sentenceData = SentenceGenerator.initSentenceData(initData);
+				const sentencePreviews : TSentencePreview[] = SentenceGenerator.getInstance({sentenceData}).getSentencePreviews();
 
 				return {
 					...state,
 					sentenceData,
+					sentencePreviews,
 					loaded : true,
 				};
 			}
@@ -671,6 +703,15 @@ namespace HappyRedux {
 			startGame : () => dispatch(startGameDispatched),
 		}) //dispatch
 	)(Done);
+
+	export const connectPreviewSentences = connect(
+		(state : AppStateI) => {
+			const {sentencePreviews = []} = state;
+
+			return {sentencePreviews};
+		},
+		() => ({}),
+	);
 
 	type InitI = (args? : {
 			store : redux.Store<AppStateI>,

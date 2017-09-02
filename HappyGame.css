@@ -2,6 +2,19 @@ html {
 	font-size: 50px;
 }
 
+.happy-preview-clause-fixed {
+    display: inline;
+}
+
+.happy-preview-clause-chosen {
+    color: orange;
+    display: inline;
+}
+
+.happy-preview-sentence {
+    margin: 20px;
+}
+
 .happy-sentence {
 	margin: 10px;
 }

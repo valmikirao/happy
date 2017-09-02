@@ -1,4 +1,8 @@
 {
+  "private": true,
+  "publishConfig": {
+    "registry" : "https://registry.npmjs.org/"
+  },
   "name": "happy_react",
   "version": "0.1.0",
   "description": "The happiest game in the world!!!!",
@@ -6,8 +10,9 @@
   "scripts": {
     "test": "mocha --timeout 10000 dist/test-ts/**/*.js",
     "mongod": "mongod --dbpath mongo-dir/ --port 27017 --journal",
+    "mongod:win": "bash -c 'mongod --dbpath mongo-dir/ --port 27017 --journal'",
     "start": "node dist/server-lib/bin/express-server.js",
-    "start-debug": "node --inspect=5858 dist/server-lib/bin/express-server.js",
+    "start:debug": "node --inspect=5858 dist/server-lib/bin/express-server.js",
     "tsc": "tsc",
     "webpack": "webpack",
     "build": "tsc && webpack",
