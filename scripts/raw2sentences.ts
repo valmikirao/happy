@@ -1,10 +1,15 @@
 import * as fs from 'fs';
+import * as yargs from 'yargs';
 
-import {TSentence} from '../server-lib/isomporphic-types';
+import {TSentence, ISentenceSetData} from '../server-lib/isomporphic-types';
 
 type TClauseChoiceRaw = string | string[];
 type TSentenceRaw = TClauseChoiceRaw[];
 type IAllSentencesRaw = {[key : string] : TSentenceRaw[]} 
+
+
+const {name, out} = yargs.argv;
+const gameConfigKey = yargs.argv.gamekey;
 
 // const allSentencesRaw : IAllSentencesRaw = {
 //     DEFAULT : defaultSentences,
@@ -12,8 +17,8 @@ type IAllSentencesRaw = {[key : string] : TSentenceRaw[]}
 //     TESTING : testing,
 // };
 
-function rawToSentences(raw : TSentenceRaw[]) : TSentence[] {
-    return raw.map(sentenceRaw => 
+function rawToSentences(raw : TSentenceRaw[]) : ISentenceSetData {
+    const sentences : TSentence[] =  raw.map(sentenceRaw => 
         sentenceRaw.map(clauseChoiceRaw => {
             if (clauseChoiceRaw instanceof Array) {
                 return clauseChoiceRaw.map((clauseRaw, i) => ({
@@ -29,13 +34,27 @@ function rawToSentences(raw : TSentenceRaw[]) : TSentence[] {
             }
         })
     );
+
+    return {
+        name,
+        gameConfigKey,
+        sentences
+    };
 }
 
 fs.readFile(process.argv[2], (err, text) => {
     if (!err) {
         let happy : any = {};
         eval(text.toString());
-        console.log(JSON.stringify(rawToSentences(happy.sentenceSpecs), null, 2));
+
+        const outString = JSON.stringify(rawToSentences(happy.sentenceSpecs), null, 2);
+
+        if (out) {
+            fs.writeFileSync(out, outString);
+        }
+        else {
+            console.log(outString);
+        }
     }
     else {
         console.error(err);

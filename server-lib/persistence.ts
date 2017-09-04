@@ -45,7 +45,7 @@ type InitT = (args?: {
     })
     => Promise<mongoose.Connection>;
 
-const init : InitT = ({url = 'mongodb://localhost:27017/db', silent = false} = {}) => {
+const init : InitT = ({url = 'mongodb://localhost:27018/db', silent = false} = {}) => {
     mongoose.connect(url, {
         useMongoClient : true,
     });

@@ -9,8 +9,8 @@
   "main": "happy.js",
   "scripts": {
     "test": "mocha --timeout 10000 dist/test-ts/**/*.js",
-    "mongod": "mongod --dbpath mongo-dir/ --port 27017 --journal",
-    "mongod:win": "bash -c 'mongod --dbpath mongo-dir/ --port 27017 --journal'",
+    "mongod": "mongod --dbpath mongo-dir/ --port 27018 --journal",
+    "mongod:win": "bash -c 'mongod --dbpath mongo-dir/ --port 27018 --journal'",
     "start": "node dist/server-lib/bin/express-server.js",
     "start:debug": "node --inspect=5858 dist/server-lib/bin/express-server.js",
     "tsc": "tsc",
