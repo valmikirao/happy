@@ -9,6 +9,7 @@ To install and run:
 
 ```
 git clone git@github.com:valmikirao/happy.git
+cd happy
 npm install
 npm run build
 npm run mongod
