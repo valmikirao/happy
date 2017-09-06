@@ -75,7 +75,7 @@ class ItPromise<T> extends Promise<T> {
 type TTryPersistInit = (args : {url : string, triesRemaing : number}) => Promise<void>
 const tryPersistInit = ({url, triesRemaing}) => {
     return Persistence
-        .init({url, silent : true}) // silent to avoid stack traces for each attempt
+        .init({url, silent : true, auth : false}) // silent to avoid stack traces for each attempt
         .catch(err => {
             if (err.name = 'MongoError' && triesRemaing > 1) {
                 return timeout(500) // wait before trying again

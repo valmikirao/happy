@@ -1,4 +1,5 @@
 node_modules
 mongo-dir
 mongo-dir.tar.gz
+mongo-ssl
 dist
