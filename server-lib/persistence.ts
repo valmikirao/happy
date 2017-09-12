@@ -42,12 +42,21 @@ const SentenceSet = mongoose.model<ISentenceSet>(
 type InitT = (args?: {
         url? : string,
         silent? : boolean,
+        auth? : boolean,
     })
     => Promise<mongoose.Connection>;
 
-const init : InitT = ({url = 'mongodb://localhost:27018/db', silent = false} = {}) => {
+const init : InitT = ({url = 'mongodb://localhost:27018/db', silent = false, auth = true} = {}) => {    
+    const authConnectOptions = auth ? {
+        user : 'miki',
+        pass : 'Lyanna123',
+    } : {};
+
+    console.log(authConnectOptions);
+
     mongoose.connect(url, {
         useMongoClient : true,
+        ...authConnectOptions,
     });
 
     if (!silent) {
