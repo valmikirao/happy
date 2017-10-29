@@ -268,14 +268,14 @@ class _PreviewSentences extends React.Component<{sentencePreviews : HappyRedux.T
 	render() {
 		const {sentencePreviews} = this.props;
 
-		const innards = sentencePreviews.map(sentence => {
-			const sentenceInnards = sentence.map(({type, text}) => {
+		const innards = sentencePreviews.map((sentence, i) => {
+			const sentenceInnards = sentence.map(({type, text}, j) => {
 				const clauseClass = type === 'FIXED' ? 'happy-preview-clause-fixed' : 'happy-preview-clause-chosen';
 
-				return <div className={clauseClass}> { text } </div>;
+				return <div className={clauseClass} key={j}> { text } </div>;
 			});
 
-			return <div className='happy-preview-sentence'>{ sentenceInnards }</div>;
+			return <div className='happy-preview-sentence' key={i}>{ sentenceInnards }</div>;
 		});
 
 		return <div className="happy-preview-sentences">{ innards }</div>;
