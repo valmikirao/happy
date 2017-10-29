@@ -1,7 +1,7 @@
 {
   "private": true,
   "publishConfig": {
-    "registry" : "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/"
   },
   "name": "happy_react",
   "version": "0.1.0",
@@ -15,8 +15,9 @@
     "start:debug": "node --inspect=5858 dist/server-lib/bin/express-server.js",
     "tsc": "tsc",
     "webpack": "webpack",
-    "build": "tsc && webpack",
-    "dist": "cd .. && tar cvzf HappyTS.dist.tar.gz HappyTS/dist HappyTS/HappyGame.css HappyTS/happy.html HappyTS/happy.tsx HappyTS/lib HappyTS/package.json HappyTS/package-lock.json HappyTS/server-lib HappyTS/test-ts HappyTS/tsconfig.json HappyTS/webpack.config.js HappyTS/.vscode"
+    "build": "tsc && webpack && npm run lessc",
+    "dist": "cd .. && tar cvzf HappyTS.dist.tar.gz HappyTS/dist HappyTS/HappyGame.css HappyTS/happy.html HappyTS/happy.tsx HappyTS/lib HappyTS/package.json HappyTS/package-lock.json HappyTS/server-lib HappyTS/test-ts HappyTS/tsconfig.json HappyTS/webpack.config.js HappyTS/.vscode",
+    "lessc": "lessc --include-path=node_modules less/happy.less dist/less/happy.css"
   },
   "keywords": [
     "happy",
@@ -69,8 +70,11 @@
     "@types/tmp": "0.0.33",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.6.0",
+    "bootstrap": "^3.3.7",
+    "bootswatch": "^3.3.7",
     "browserify": "^14.1.0",
     "chai": "^3.5.0",
+    "less": "^2.7.2",
     "mocha": "^3.4.2",
     "seed-random": "^2.2.0",
     "tsify": "^3.0.1",

@@ -30,25 +30,30 @@ const actions = {
 const happyListApp = (state : IState, action : any) : IState => {
 	switch(action.type) {
 		case actions.LIST_LOADED : {
+			const list : TSentenceSetList = action.list;
+			const sortedList = list.sort((a, b) => a.name.localeCompare(b.name));
 			return {
-				list : action.list,
+				list : sortedList,
 			};
 		}
 	}
 }
 
-const store = createStore(
-	happyListApp
-);
+const store = createStore(happyListApp);
 
 class _HappyList extends React.Component<{list : TSentenceSetList}> {
 	render() {
 		const innards = this.props.list.map(({name, gameConfigKey}, i) => {
 			const url = 'happy.html?' + queryString.stringify({gameConfigKey});
-			return <div key={i}><a href={url}>{name}</a></div>;
+			return <div className="happy-list-row" key={i}>
+				<div className="happy-list-item">
+					<a href={url}>{name}</a>
+				</div>
+			</div>;
 		});
 
 		return <div className="happy-list">
+			<div className="happy-list-row"><div className="happy-list-header">Pick one</div></div>
 			{ innards }
 		</div>;
 	}

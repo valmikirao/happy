@@ -1,5 +1,5 @@
 import * as redux from 'redux';
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
 import { connect, Provider }  from 'react-redux';
 import thunkMiddleware from 'redux-thunk';
 import * as queryString from 'query-string';
@@ -134,7 +134,7 @@ namespace HappyRedux {
 		getActiveClauseChoice() : TClause[] {
 			return this.sentenceData.activeClauseChoice;
 		}
-		
+
 		getSentenceDataCorrectChoice(args : {text: string}) : IAllSentenceData {
 			let {text} = args;
 			let {sentenceData} = this;
@@ -175,7 +175,7 @@ namespace HappyRedux {
 								type : 'CHOSEN',
 								text : clauseChoice.find(clause => clause.isCorrect).text,
 							};
-					
+
 					return previewClause;
 				});
 
@@ -218,7 +218,6 @@ namespace HappyRedux {
 		sentencePreviews : TSentencePreview[],
 	};
 
-	
 	type GetInitialStateI = () => AppStateI;
 	const getInitialState : GetInitialStateI = () => {
 
@@ -248,7 +247,7 @@ namespace HappyRedux {
 	export const actions = {
 		INIT : 'action_INIT',
 		CORRECT_CHOICE : 'action_CORRECT_CHOICE',
-		WRONG_CHOICE : 'action_WRONG_CHOICE',	
+		WRONG_CHOICE : 'action_WRONG_CHOICE',
 		START : 'action_START',
 		TICK : 'action_TICK',
 		END : 'actions_END',
@@ -394,7 +393,7 @@ namespace HappyRedux {
 
 				const {currentTime} = action;
 				let {startTime, ticks : ticksState, barRemaining} = state.timer;
-				
+
 				// how many ticks have we missed
 				const timeFromStart = currentTime - startTime;
 				const ticksFromStart = Math.floor(timeFromStart / TICK_INTERVAL);
@@ -441,17 +440,18 @@ namespace HappyRedux {
 		}
 	}
 
-	export const createHappyStore = () => createStore(
-		happyGameApp,
-		applyMiddleware(thunkMiddleware),
-	)
+	export const createHappyStore = ({ composeFunction = compose } = {}) => {
+		return createStore(happyGameApp, composeFunction(
+			applyMiddleware(thunkMiddleware),
+		));
+	}
 
 	export const connectHappyGame = (HappyGame) => connect(
 		({started, done, loaded} = {started : false, loaded : false, done : false}) => ({started, loaded, done}),
 		(dispatch) => ({
 			loadSentenceSet : ({gameConfigKey}) => {
 				return getSentenceSet({gameConfigKey})
-					.then(sentenceSet => 
+					.then(sentenceSet =>
 						dispatch({
 							type : actions.GAME_LOADED,
 							initData : sentenceSet,
@@ -521,7 +521,7 @@ namespace HappyRedux {
 	const onTimerIntervalDispatch = (dispatch, getState) => {
 		const {timer, score} = getState();
 		const {intervalId, barRemaining} = timer;
-		
+
 		if (barRemaining > 0) {
 			const currentTime = new Date().valueOf();
 
@@ -577,7 +577,7 @@ namespace HappyRedux {
         window?: any;
     }
 
-    
+
 	// only way I can figure out how to get types working right with fetch
 	declare function fetch(input: string, init?: RequestInit): Promise<Response>;
 
@@ -694,7 +694,7 @@ namespace HappyRedux {
 
 			return {barRemaining};
 		},
-		() => ({}), 
+		() => ({}),
 	)(TimerBar);
 
 	export const connectDone = (Done) => connect(

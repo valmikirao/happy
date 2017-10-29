@@ -10,7 +10,7 @@ const {actions} = HappyRedux;
 
 type ItEquals = <T>(string, value : T, match : T) => void;
 const itEquals : ItEquals = (description, value, match) =>
-    it(`${description} === ${match}`, () => expect(value).to.deep.equal(match)) 
+    it(`${description} === ${match}`, () => expect(value).to.deep.equal(match))
 
 const initDataTest : ISentenceSetData = {
     gameConfigKey : '_testing_',

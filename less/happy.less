@@ -1,0 +1,219 @@
+@import "bootstrap/less/bootstrap.less";
+@import "bootswatch/sandstone/variables.less";
+@import "bootswatch/sandstone/bootswatch.less";
+
+@happy-app-width: @screen-sm-max;
+
+.happy-btn {
+    .btn;
+    @media(min-width: @screen-sm-max) {
+        font-size: @font-size-h4;
+    }
+}
+
+.happy-list {
+    .container();
+    max-width: @happy-app-width;
+    padding: @jumbotron-padding 0px;
+    text-align: center;
+}
+
+.happy-list-row {
+    .make-row();
+    padding: 4px 0px;
+}
+
+.happy-list-column {
+    .make-xs-column(8);
+    .make-xs-column-offset(2);
+}
+
+.happy-list-item {
+    .happy-list-column;
+
+    a {
+        .happy-btn;
+        .btn-default;
+        .btn-block;
+    };
+}
+
+.happy-list-header {
+    .happy-list-column;
+    font-size: @font-size-h1;
+}
+
+.happy-preview-clause-fixed {
+    .text-info;
+    display: inline;
+}
+
+.happy-preview-clause-chosen {
+    .text-primary;
+    display: inline;
+}
+
+.happy-preview-sentence {
+    margin: 30px 0px;
+    .lead;
+}
+
+.happy-sentence {
+    margin: 10px;
+}
+
+.happy {
+    .container();
+    max-width: @happy-app-width;
+    text-align: center;
+    padding: @jumbotron-padding;
+}
+
+.happy-blank-filled {
+    .well;
+    .well-sm;
+    display: inline-block;
+    margin: 5px;
+}
+
+.happy-blank {
+    .happy-blank-filled;
+    color: @well-bg;
+}
+
+.happy-sentence.happy-current-sentence {
+    display: block;
+}
+
+.happy-sentence.happy-answered-sentence {
+    display: block;
+    margin: 5px;
+}
+
+.happy-current-word-group {
+    display: table;
+    height: 5em;
+    text-align: center;
+    width : 100%;
+}
+
+.happy-click-word {
+    .btn;
+    .btn-primary;
+    .make-xs-column(10);
+    .make-xs-column-offset(1);
+
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.happy-click-word.happy-word-wrong {
+    .btn-danger;
+}
+
+.happy-current-word-group > div {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.happy-score {
+    .panel;
+    .panel-primary;
+
+    .make-xs-column(4);
+    display: block;
+    float: none;
+    padding-left: 0px;
+    padding-right: 0px;
+
+    .panel-heading {
+        padding: 1px 15px;
+    }
+
+    .panel-body {
+        padding: 2px 15px;
+    }
+
+    .panel-title {
+        padding: 0px
+    }
+}
+
+.happy-score-label {
+    .panel-heading;
+}
+
+.happy-score-value {
+    .panel-body;
+}
+
+.happy-par {
+    display: block;
+}
+
+.happy-score-label {
+    display: inline;
+}
+
+.happy-time-div {
+    display: none;
+    font-weight: bold;
+    padding: 5px 0px;
+    color: orange;
+}
+
+.happy-try-again {
+    display: block;
+    font-weight: normal;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.happy-start-button {
+    .happy-btn;
+    .btn-default;
+    margin: 10px;
+}
+
+.happy-click-word-group {
+    font-weight: bold;
+    display: inline-block;
+}
+
+.happy-header {
+    text-align: left;
+}
+
+.happy-timer {
+    .progress;
+
+    div {
+        .transition(unset);
+    }
+}
+
+.happy-restart {
+    .btn;
+    .btn-primary;
+
+    .make-xs-column(6);
+    .make-xs-column-offset(3)
+}
+
+.happy-high-scores {
+    .table;
+    .table-striped;
+
+    .make-xs-column(8);
+    .make-xs-column-offset(2);
+}
+
+.happy-done-text {
+    .make-xs-column(4);
+    .make-xs-column-offset(4);
+
+    .alert;
+    .alert-success;
+}

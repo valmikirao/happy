@@ -12,19 +12,22 @@ import HappyRedux from '../lib/happy-redux';
 import {TClauseChoice} from '../server-lib/isomporphic-types';
 
 
-class PAR extends React.Component<{value : string}> {
-	render() {
-		return <div className="happy-par">PAR: {this.props.value} </div>;
-	}
-}
-
 class _Score extends React.Component<{value : string}> {
 	render() {
 		const {value} = this.props;
 
-		return <div className="happy-score" id="happy-score">
-			<div className="happy-score-label">Score:</div>
-			<div className="happy-score" id="happy-score-value">{value}</div>
+		let key = 0;
+
+		/* Tried to turn this into all happy-* less styles, but
+		 * can't make it work #csssucks
+		*/
+		return <div className="happy-score">
+			<div className="panel-heading">
+				<h3 className="panel-title">Score</h3>
+			</div>
+			<div className="panel-body">
+				{value}
+			</div>
 		</div>;
 	}
 }
@@ -35,10 +38,24 @@ class _TimerBar extends React.Component<{barRemaining : number}> {
 	render () {
 		const {barRemaining} = this.props;
 
-		let initialWidth = 300;
-		let currentWidth = initialWidth * barRemaining;
-		
-		return <div className="happy-timer-bar" id="happy-timer-bar" style={{width: currentWidth + 'px'}}></div>;
+		const percentRemaining = Math.round(
+			(barRemaining * 100) // to a percentage
+			* 10 // to get to 1 decimal point 
+		) / 10;
+
+		const barSubClass =
+			percentRemaining >= 50 ? 'progress-bar-success' :
+			percentRemaining < 50 && percentRemaining >= 20 ? 'progress-bar-warning' :
+			'progress-bar-danger';
+
+		const barClass = [
+			'progress-bar',
+			barSubClass,
+		].join(' ');
+
+		return <div className="happy-timer">
+			<div className={ barClass } style={ { width: percentRemaining + '%' } }/>
+		</div>;
 	}
 };
 
@@ -47,7 +64,7 @@ const TimerBar = HappyRedux.connectTimerBar(_TimerBar);
 class GameStatus extends React.Component {
 	render() {
 		return <div className="happy-header">
-			<PAR value="7500"/><Score/>
+			<Score/>
 			<TimerBar/>
 		</div>;
 	}
@@ -57,7 +74,12 @@ class Clause extends React.Component<{text : string}> {
 	render() {
 		const {text} = this.props;
 
-		return <div className="happy-blank">{text}</div>;
+		// mah, such a hack
+		const className = text === '____' ?
+			"happy-blank"
+			: "happy-blank-filled";
+
+		return <div className={className}>{text}</div>;
 	}
 }
 
@@ -70,7 +92,8 @@ class Sentence extends React.Component<{clauses : string[]}> {
 	}
 }
 
-let store = HappyRedux.createHappyStore();
+const composeFunction = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__;
+const store = HappyRedux.createHappyStore({ composeFunction });
 
 // document.store = store;
 // document.tryClause = tryClause;
@@ -178,18 +201,17 @@ class _HappyCurrentSentence extends React.Component<{displayClauses : string[]}>
 };
 const HappyCurrentSentence = HappyRedux.connectHappyCurrentSentence(_HappyCurrentSentence);
 
-class _Done extends React.Component<{startGame : () => void}> {
+class _Restart extends React.Component<{startGame : () => void}> {
 	render() {
 		const {startGame} = this.props;
 
-		return <div className="happy-done">
-			<div className="happy-done-text">Done!</div>
-			<div><a href="#" onClick={startGame}>restart</a></div>
-		</div>;
+		let key = 0;
+
+		return <a href="#" className="happy-restart" onClick={startGame}>restart</a>;
 	}
 }
 
-const Done = HappyRedux.connectDone(_Done);
+const Restart = HappyRedux.connectDone(_Restart);
 
 class _HighScores extends React.Component<{
 	loaded : boolean,
@@ -211,17 +233,21 @@ class _HighScores extends React.Component<{
 			currentScore,
 		} = this.props;
 
+		let key = 0;
+
 		if (! loaded) {
-			return <div className="happy-high-scores">Loading...</div>
+			return <div className="happy-high-scores-loading">Loading...</div>
 		}
 		else {
-			return <div className="happy-high-scores">
-				<div className="happy-high-score"><span className="happy-high-score-label">All Time High:</span><span className="happy-high-score-value">{allTimeHigh}</span></div>
-				<div className="happy-high-score"><span className="happy-high-score-label">Yearly High:</span><span className="happy-high-score-value">{yearHigh}</span></div>
-				<div className="happy-high-score"><span className="happy-high-score-label">Monthly High:</span><span className="happy-high-score-value">{monthHigh}</span></div>
-				<div className="happy-high-score"><span className="happy-high-score-label">Weekly High:</span><span className="happy-high-score-value">{weekHigh}</span></div>
-				<div className="happy-high-score"><span className="happy-high-score-label">Daily High:</span><span className="happy-high-score-value">{dayHigh}</span></div>
-				<div className="happy-high-score"><span className="happy-high-score-label">Current Score:</span><span className="happy-high-score-value">{currentScore}</span></div>
+			return <div>
+				<table className="happy-high-scores"><tbody>
+					<tr key={key++}><td>All Time High:</td><td>{allTimeHigh}</td></tr>
+					<tr key={key++}><td>Yearly High:</td><td>{yearHigh}</td></tr>
+					<tr key={key++}><td>Monthly High:</td><td>{monthHigh}</td></tr>
+					<tr key={key++}><td>Weekly High:</td><td>{weekHigh}</td></tr>
+					<tr key={key++}><td>Daily High:</td><td>{dayHigh}</td></tr>
+					<tr key={key++}><td>Current Score:</td><td>{currentScore}</td></tr>
+				</tbody></table>
 			</div>;
 		}
 	}
@@ -241,7 +267,7 @@ const {gameConfigKey} = queryString.parse(document.location.search);
 class _PreviewSentences extends React.Component<{sentencePreviews : HappyRedux.TSentencePreview[]}> {
 	render() {
 		const {sentencePreviews} = this.props;
-		
+
 		const innards = sentencePreviews.map(sentence => {
 			const sentenceInnards = sentence.map(({type, text}) => {
 				const clauseClass = type === 'FIXED' ? 'happy-preview-clause-fixed' : 'happy-preview-clause-chosen';
@@ -261,10 +287,10 @@ const PreviewSentences = HappyRedux.connectPreviewSentences(_PreviewSentences);
 class _HappyGame extends React.Component<THappyGameProps> {
 	render() {
 		const {started, loaded, done} = this.props;
-		const {loadSentenceSet} = this.props; 
+		const {loadSentenceSet} = this.props;
 
 		let innards : JSX.Element | JSX.Element[] = [];
-		
+
 		let key = 0;
 
 		if (! loaded) {
@@ -276,11 +302,12 @@ class _HappyGame extends React.Component<THappyGameProps> {
 		else if (! started) {
 			innards = [
 				<StartButton key={key++}/>,
-				<PreviewSentences/>,
+				<PreviewSentences key={key++}/>,
 			];
 		}
 		else if (! done) {
 			innards = [
+				<GameStatus key={key++}/>,
 				<HappyCurrentSentence key={key++}/>,
 				<ActiveClauseChoice key={key++}/>,
 				<PastSentences key={key++}/>
@@ -288,13 +315,13 @@ class _HappyGame extends React.Component<THappyGameProps> {
 		}
 		else {
 			innards = [
+				<h1 key={key++}>Done!</h1>,
 				<HighScores key={key++}/>,
-				<Done key={key++}/>
+				<Restart key={key++}/>
 			];
 		}
 
-		return <div className="happy-main">
-			<GameStatus/>
+		return <div className="happy">
 			{ innards }
 		</div>;
 	}
