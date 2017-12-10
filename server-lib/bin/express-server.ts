@@ -33,7 +33,11 @@ app.use((request, response, next) =>{
 });
 
 app.use(basicAuth({
-    users : {'miki' : 'Lyanna123'},
+    users : {
+        'miki' : 'Lyanna123',
+        'tom'  : 'Cat123',
+        'renu' : 'Chewie123',
+    },
     challenge : true,
     realm : 'default',
 }));
